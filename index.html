@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文献资料库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 使用 Inter 字体 */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* 优化 line-clamp */
+        @supports (-webkit-line-clamp: 3) {
+            .line-clamp-3 {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+            }
+        }
+
+        /* 模态框过渡 */
+        .modal-overlay {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .modal-content {
+            transition: transform 0.2s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-gray-800">文献资料库</div>
+            <!-- Removed the user ID display div -->
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-6 py-8">
+
+        <!-- 搜索和操作栏 -->
+        <div class="mb-8 md:flex md:items-center md:justify-between">
+            <!-- 搜索栏 -->
+            <div class="relative flex-grow">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <!-- 搜索图标 -->
+                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" id="searchInput"
+                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="搜索标题、简介或分类 (例如: 论文)...">
+            </div>
+
+            <!-- 添加资料按钮 -->
+            <button id="addDocButton"
+                class="w-full md:w-auto mt-4 md:mt-0 md:ml-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-colors">
+                添加新资料
+            </button>
+        </div>
+
+        <!-- 资料卡片网格 -->
+        <div id="documentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 资料卡片将在这里动态生成 -->
+        </div>
+
+        <!-- 加载中/无结果 -->
+        <div id="noResults" class="hidden text-center text-gray-500 mt-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                stroke-width="1">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 10v.01M10 10h.01M10 10l.01.01M10 10l-.01.01M10 10l.01-.01M10 10l-.01-.01M14 10v.01M14 10h.01M14 10l.01.01M14 10l-.01.01M14 10l.01-.01M14 10l-.01-.01M18 10v.01M18 10h.01M18 10l.01.01M18 10l-.01.01M18 10l.01-.01M18 10l-.01-.01M6 10v.01M6 10h.01M6 10l.01.01M6 10l-.01.01M6 10l.01-.01M6 10l-.01-.01M10 14v.01M10 14h.01M10 14l.01.01M10 14l-.01.01M10 14l.01-.01M10 14l-.01-.01M10 18v.01M10 18h.01M10 18l.01.01M10 18l-.01.01M10 18l.01-.01M10 18l-.01-.01M10 6v.01M10 6h.01M10 6l.01.01M10 6l-.01.01M10 6l.01-.01M10 6l-.01-.01" />
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
+            <p class="text-sm mt-2">请尝试更改您的搜索关键词。</p>
+        </div>
+
+    </main>
+
+    <!-- 添加资料模态框 (Modal) -->
+    <div id="addDocModal"
+        class="modal-overlay fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
+        <div
+            class="modal-content bg-white w-full max-w-lg rounded-lg shadow-xl overflow-hidden transform scale-95 opacity-0">
+            <!-- 模态框头部 -->
+            <div class="flex justify-between items-center p-5 border-b">
+                <h3 class="text-xl font-semibold text-gray-900">添加新资料</h3>
+                <button id="closeModalButton" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 模态框内容 (表单) -->
+            <form id="addDocForm">
+                <div class="p-6 space-y-4">
+                    <!-- 错误提示 -->
+                    <div id="formError" class="hidden p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                        <input type="text" name="title" id="title"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">简介</label>
+                        <textarea name="description" id="description" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required></textarea>
+                    </div>
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">分类</label>
+                        <select name="category" id="category"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                            <option value="">请选择一个分类</option>
+                            <option value="学术论文">学术论文</option>
+                            <option value="翻译资料">翻译资料</option>
+                            <option value="行业报告">行业报告</option>
+                            <option value="内部文档">内部文档</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="link" class="block text-sm font-medium text-gray-700 mb-1">分享链接 (URL)</label>
+                        <input type="url" name="link" id="link"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="https://..." required>
+                    </div>
+                </div>
+
+                <!-- 模态框底部 -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                    <button type="button" id="cancelButton"
+                        class="px-5 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        取消
+                    </button>
+                    <button type="submit" id="saveButton"
+                        class="relative px-5 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <span id="saveButtonText">保存</span>
+                        <div id="saveSpinner" class="hidden absolute inset-0 flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 (Confirm Delete Modal) -->
+    <div id="confirmDeleteModal"
+        class="modal-overlay fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
+        <div
+            class="modal-content bg-white w-full max-w-md rounded-lg shadow-xl overflow-hidden transform scale-95 opacity-0">
+            <!-- 模态框头部 -->
+            <div class="flex items-start justify-between p-5 border-b">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0">
+                        <!-- 警告图标 -->
+                        <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        确认删除
+                    </h3>
+                </div>
+                <button id="closeConfirmModalButton" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 模态框内容 -->
+            <div class="p-6">
+                <p class="text-sm text-gray-600">
+                    您确定要删除这份资料吗？此操作无法撤销。
+                </p>
+                <p id="confirmDeleteMessage" class="text-sm text-gray-700 font-medium mt-2"></p>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button type="button" id="cancelDeleteButton"
+                    class="px-5 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    取消
+                </button>
+                <button type="button" id="confirmDeleteButton"
+                    class="relative px-5 py-2 bg-red-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- 引入 Firebase SDK ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, doc, setDoc, deleteDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase 配置 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyARjlq6rc5v3eGQ6YKrApjcYj239nGDvtk",
+            authDomain: "tiandiweb-74e55.firebaseapp.com",
+            projectId: "tiandiweb-74e55",
+            storageBucket: "tiandiweb-74e55.firebasestorage.app",
+            messagingSenderId: "1039130690359",
+            appId: "1:1039130690359:web:4c055ff762c2f319ec90b2",
+            measurementId: "G-YCFK7Q0BZL"
+        };
+
+        // --- 初始化 Firebase ---
+        let app, auth, db;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            setLogLevel('Debug'); // 查看 Firestore 日志
+        } catch (e) {
+            console.error("Firebase 初始化失败:", e);
+        }
+
+        // Wait for the DOM to be fully loaded before querying elements
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- DOM 元素 ---
+            const searchInput = document.getElementById('searchInput');
+            const documentList = document.getElementById('documentList');
+            const noResults = document.getElementById('noResults');
+            // Removed userIdDisplay element query
+
+            // 模态框 DOM
+            const addDocModal = document.getElementById('addDocModal'); // This is the overlay
+            const modalContent = addDocModal.querySelector('.modal-content');
+            const addDocButton = document.getElementById('addDocButton');
+            const closeModalButton = document.getElementById('closeModalButton');
+            const cancelButton = document.getElementById('cancelButton');
+            const addDocForm = document.getElementById('addDocForm');
+            const saveButton = document.getElementById('saveButton');
+            const saveButtonText = document.getElementById('saveButtonText');
+            const saveSpinner = document.getElementById('saveSpinner');
+            const formError = document.getElementById('formError');
+
+            // 确认删除模态框 DOM
+            const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+            const confirmModalContent = confirmDeleteModal.querySelector('.modal-content');
+            const closeConfirmModalButton = document.getElementById('closeConfirmModalButton');
+            const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+            const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+            const confirmDeleteMessage = document.getElementById('confirmDeleteMessage');
+
+            // --- App State ---
+            let userId, documentsCollection, collectionPath;
+            let allDocuments = []; // 用于搜索的本地缓存
+            let docIdToDelete = null; // 存储待删除的文档ID
+
+            // Check if Firebase init failed earlier
+            if (!app) {
+                noResults.innerHTML = '<p class="text-xl text-red-500">无法连接到数据库，请刷新页面。</p>';
+                noResults.classList.remove('hidden');
+                return; // Stop execution
+            }
+
+            // --- 模态框控制 ---
+            function openModal() {
+                addDocForm.reset(); // 清空表单
+                formError.classList.add('hidden');
+                addDocModal.classList.remove('hidden');
+                setTimeout(() => {
+                    addDocModal.classList.remove('opacity-0'); // Use addDocModal as the overlay
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10); // 触发过渡
+            }
+
+            function closeModal() {
+                addDocModal.classList.add('opacity-0'); // Use addDocModal as the overlay
+                modalContent.classList.add('scale-95', 'opacity-0');
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                setTimeout(() => {
+                    addDocModal.classList.add('hidden');
+                }, 200); // 等待过渡完成
+            }
+
+            // --- 确认删除模态框控制 ---
+            function openConfirmModal(docId, docTitle) {
+                docIdToDelete = docId;
+                confirmDeleteMessage.textContent = `即将删除: "${docTitle}"`; // 显示要删除的标题
+                confirmDeleteModal.classList.remove('hidden');
+                setTimeout(() => {
+                    confirmDeleteModal.classList.remove('opacity-0');
+                    confirmModalContent.classList.remove('scale-95', 'opacity-0');
+                    confirmModalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+
+            function closeConfirmModal() {
+                confirmDeleteModal.classList.add('opacity-0');
+                confirmModalContent.classList.add('scale-95', 'opacity-0');
+                confirmModalContent.classList.remove('scale-100', 'opacity-100');
+                setTimeout(() => {
+                    confirmDeleteModal.classList.add('hidden');
+                    docIdToDelete = null; // 清除ID
+                    confirmDeleteMessage.textContent = ""; // 清空消息
+                }, 200);
+            }
+
+            // --- 辅助函数：根据分类获取标签颜色 ---
+            function getCategoryClass(category) {
+                switch (category) {
+                    case "学术论文":
+                        return "bg-blue-100 text-blue-800";
+                    case "翻译资料":
+                        return "bg-green-100 text-green-800";
+                    case "行业报告":
+                        return "bg-purple-100 text-purple-800";
+                    case "内部文档":
+                        return "bg-yellow-100 text-yellow-800";
+                    default:
+                        return "bg-gray-100 text-gray-800";
+                }
+            }
+
+            // --- 核心功能：渲染文档列表 ---
+            function renderDocuments(documents) {
+                // 清空当前列表
+                documentList.innerHTML = '';
+
+                // 检查是否有结果
+                if (documents.length === 0) {
+                    noResults.classList.remove('hidden');
+                    documentList.classList.add('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                    documentList.classList.remove('hidden');
+                }
+
+                // 遍历文档并创建卡片
+                documents.forEach(doc => {
+                    const categoryClasses = getCategoryClass(doc.category);
+
+                    const card = `
+                        <div class="document-card bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+                            <div class="p-6 flex-grow">
+                                <!-- 分类标签 -->
+                                <span class="${categoryClasses} text-xs font-semibold px-2.5 py-0.5 rounded-full">${doc.category}</span>
+                                
+                                <!-- 标题 -->
+                                <h3 class="text-xl font-bold text-gray-900 mt-3 mb-2">${doc.title}</h3>
+                                
+                                <!-- 简介 -->
+                                <p class="text-gray-600 text-sm mb-4 line-clamp-3" title="${doc.description}">
+                                    ${doc.description}
+                                </p>
+                            </div>
+                            
+                            <!-- 卡片底部 -->
+                            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center">
+                                <span class="text-gray-500 text-sm">${doc.date}</span>
+                                <div class="flex space-x-2">
+                                    <a href="${doc.link}" target="_blank" 
+                                       class="text-sm font-medium text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                       查看详情
+                                    </a>
+                                    <button
+                                       class="delete-button text-sm font-medium text-red-600 bg-red-100 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors"
+                                       data-doc-id="${doc.id}">
+                                       删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    documentList.innerHTML += card;
+                });
+            }
+
+            // --- 核心功能：过滤文档 ---
+            function filterDocuments() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+
+                if (!searchTerm) {
+                    renderDocuments(allDocuments); // 如果搜索词为空，显示所有
+                    return;
+                }
+
+                const filtered = allDocuments.filter(doc => {
+                    const titleMatch = doc.title.toLowerCase().includes(searchTerm);
+                    const descriptionMatch = doc.description.toLowerCase().includes(searchTerm);
+                    const categoryMatch = doc.category.toLowerCase().includes(searchTerm);
+
+                    return titleMatch || descriptionMatch || categoryMatch;
+                });
+
+                renderDocuments(filtered);
+            }
+
+            // --- 核心功能：加载 Firebase 文档 ---
+            function loadDocuments() {
+                if (!documentsCollection) return;
+
+                // 使用 onSnapshot 实时监听数据变化
+                const q = query(documentsCollection);
+                onSnapshot(q, (querySnapshot) => {
+                    allDocuments = []; // 清空本地缓存
+                    querySnapshot.forEach((doc) => {
+                        allDocuments.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Firestore 不保证顺序，我们在客户端排序
+                    // 按日期倒序 (最新的在前)
+                    allDocuments.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    // 使用 filterDocuments 重新渲染，以保留当前的搜索状态
+                    filterDocuments();
+
+                }, (error) => {
+                    console.error("加载文档失败: ", error);
+                    noResults.innerHTML = '<p class="text-xl text-red-500">加载资料失败，请检查网络连接。</p>';
+                    noResults.classList.remove('hidden');
+                });
+            }
+
+            // --- 核心功能：删除文档 ---
+            async function handleDeleteClick(docId) {
+                if (!docId || !collectionPath) {
+                    console.error("无法删除：缺少文档ID或集合路径");
+                    return;
+                }
+
+                console.log(`正在删除文档: ${docId}`);
+                try {
+                    const docRef = doc(db, collectionPath, docId);
+                    await deleteDoc(docRef);
+                    // onSnapshot 会自动处理UI更新
+                } catch (error) {
+                    console.error("删除失败: ", error);
+                    // 可以在这里向用户显示一个非阻塞的错误提示
+                }
+            }
+
+            // --- 核心功能：保存新文档 ---
+            async function saveDocument(event) {
+                event.preventDefault();
+                if (!documentsCollection) return;
+
+                formError.classList.add('hidden');
+                saveButton.disabled = true;
+                saveButtonText.classList.add('hidden');
+                saveSpinner.classList.remove('hidden');
+
+                try {
+                    const formData = new FormData(addDocForm);
+                    const newDoc = {
+                        title: formData.get('title'),
+                        description: formData.get('description'),
+                        category: formData.get('category'),
+                        link: formData.get('link'),
+                        date: new Date().toISOString().split('T')[0] // 自动设置日期
+                    };
+
+                    // 简单验证
+                    if (!newDoc.title || !newDoc.description || !newDoc.category || !newDoc.link) {
+                        throw new Error("请填写所有字段。");
+                    }
+
+                    // 添加到 Firestore
+                    await addDoc(documentsCollection, newDoc);
+
+                    closeModal(); // 成功后关闭模态框
+
+                } catch (error) {
+                    console.error("保存失败: ", error);
+                    formError.textContent = `保存失败: ${error.message}`;
+                    formError.classList.remove('hidden');
+                } finally {
+                    saveButton.disabled = false;
+                    saveButtonText.classList.remove('hidden');
+                    saveSpinner.classList.add('hidden');
+                }
+            }
+
+            // --- 事件监听 ---
+
+            // 监听搜索框的输入
+            searchInput.addEventListener('keyup', filterDocuments);
+
+            // 监听模态框按钮
+            addDocButton.addEventListener('click', openModal);
+            closeModalButton.addEventListener('click', closeModal);
+            cancelButton.addEventListener('click', closeModal);
+            addDocForm.addEventListener('submit', saveDocument);
+
+            // 监听删除按钮 (Event Delegation)
+            documentList.addEventListener('click', (event) => {
+                const deleteButton = event.target.closest('.delete-button');
+                if (deleteButton) {
+                    event.preventDefault();
+                    const docId = deleteButton.dataset.docId;
+
+                    // 找到文档标题
+                    const docToDelete = allDocuments.find(d => d.id === docId);
+                    const docTitle = docToDelete ? docToDelete.title : "未知资料";
+
+                    if (docId) {
+                        // 打开确认模态框，而不是直接删除
+                        openConfirmModal(docId, docTitle);
+                    }
+                }
+            });
+
+            // 监听确认删除模态框按钮
+            closeConfirmModalButton.addEventListener('click', closeConfirmModal);
+            cancelDeleteButton.addEventListener('click', closeConfirmModal);
+            confirmDeleteButton.addEventListener('click', () => {
+                if (docIdToDelete) {
+                    handleDeleteClick(docIdToDelete);
+                }
+                closeConfirmModal();
+            });
+
+            // --- 认证和启动 ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // 用户已登录
+                    userId = user.uid;
+                    console.log("用户已认证:", userId);
+
+                    // 【修改 1】: 定义数据库集合路径
+                    // 不再使用复杂的 /artifacts/ 路径，直接使用一个简单的集合名
+                    collectionPath = `documents`; // 您可以随意命名，例如 'my_docs'
+                    documentsCollection = collection(db, collectionPath);
+
+                    // 加载文档
+                    loadDocuments();
+
+                } else {
+                    // 用户未登录，尝试登录
+                    console.log("用户未登录，尝试匿名登录...");
+                    try {
+                        // 【修改 2】: 移除 IF/ELSE，始终使用匿名登录
+                        await signInAnonymously(auth);
+
+                        // onAuthStateChanged 将再次触发
+                    } catch (error) {
+                        console.error("登录失败:", error);
+                        // Removed userIdDisplay.textContent update
+                        noResults.innerHTML = '<p class="text-xl text-red-500">认证失败，无法加载资料库。</p>';
+                        noResults.classList.remove('hidden');
+                    }
+                }
+            });
+
+
+        }); // End of DOMContentLoaded
+
+    </script>
+</body>
+
+</html>
