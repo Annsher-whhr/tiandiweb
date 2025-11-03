@@ -4,16 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文献资料库</title>
+    <title>文献资料库 (腾讯云版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入腾讯云 CloudBase SDK -->
+    <!-- [修复] 切换到腾讯云官方另一个更稳定的 CDN 地址 -->
+    <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.21.6/cloudbase.full.js?v=1"></script>
     <style>
-        /* 使用 Inter 字体 */
         body {
             font-family: 'Inter', sans-serif;
         }
 
-        /* 优化 line-clamp */
         @supports (-webkit-line-clamp: 3) {
             .line-clamp-3 {
                 overflow: hidden;
@@ -24,7 +25,6 @@
             }
         }
 
-        /* 模态框过渡 */
         .modal-overlay {
             transition: opacity 0.2s ease-in-out;
         }
@@ -41,7 +41,6 @@
     <nav class="bg-white shadow-md">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-gray-800">文献资料库</div>
-            <!-- Removed the user ID display div -->
         </div>
     </nav>
 
@@ -53,7 +52,6 @@
             <!-- 搜索栏 -->
             <div class="relative flex-grow">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <!-- 搜索图标 -->
                     <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -79,13 +77,28 @@
 
         <!-- 加载中/无结果 -->
         <div id="noResults" class="hidden text-center text-gray-500 mt-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                stroke-width="1">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 10v.01M10 10h.01M10 10l.01.01M10 10l-.01.01M10 10l.01-.01M10 10l-.01-.01M14 10v.01M14 10h.01M14 10l.01.01M14 10l-.01.01M14 10l.01-.01M14 10l-.01-.01M18 10v.01M18 10h.01M18 10l.01.01M18 10l-.01.01M18 10l.01-.01M18 10l-.01-.01M6 10v.01M6 10h.01M6 10l.01.01M6 10l-.01.01M6 10l.01-.01M6 10l-.01-.01M10 14v.01M10 14h.01M10 14l.01.01M10 14l-.01.01M10 14l.01-.01M10 14l-.01-.01M10 18v.01M10 18h.01M10 18l.01.01M10 18l-.01.01M10 18l.01-.01M10 18l-.01-.01M10 6v.01M10 6h.01M10 6l.01.01M10 6l-.01.01M10 6l.01-.01M10 6l-.01-.01" />
-            </svg>
-            <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
-            <p class="text-sm mt-2">请尝试更改您的搜索关键词。</p>
+            <!-- 初始加载状态 -->
+            <div id="loadingState">
+                <svg class="animate-spin mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <h3 class="mt-2 text-lg font-medium text-gray-900">正在加载资料...</h3>
+                <p class="text-sm mt-2">请稍候，正在连接到数据库。</p>
+            </div>
+            <!-- 无结果状态 -->
+            <div id="emptyState" class="hidden">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    stroke-width="1">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 10v.01M10 10h.01M10 10l.01.01M10 10l-.01.01M10 10l.01-.01M10 10l-.01-.01M14 10v.01M14 10h.01M14 10l.01.01M14 10l-.01.01M14 10l.01-.01M14 10l-.01-.01M18 10v.01M18 10h.01M18 10l.01.01M18 10l-.01.01M18 10l.01-.01M18 10l-.01-.01M6 10v.01M6 10h.01M6 10l.01.01M6 10l-.01.01M6 10l.01-.01M6 10l-.01-.01M10 14v.01M10 14h.01M10 14l.01.01M10 14l-.01.01M10 14l.01-.01M10 14l-.01-.01M10 18v.01M10 18h.01M10 18l.01.01M10 18l-.01.01M10 18l.01-.01M10 18l-.01-.01M10 6v.01M10 6h.01M10 6l.01.01M10 6l-.01.01M10 6l.01-.01M10 6l-.01-.01" />
+                </svg>
+                <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
+                <p class="text-sm mt-2">请尝试更改您的搜索关键词，或添加第一份资料。</p>
+            </div>
         </div>
 
     </main>
@@ -95,7 +108,7 @@
         class="modal-overlay fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
         <div
             class="modal-content bg-white w-full max-w-lg rounded-lg shadow-xl overflow-hidden transform scale-95 opacity-0">
-            <!-- 模态框头部 -->
+            <!-- 头部 -->
             <div class="flex justify-between items-center p-5 border-b">
                 <h3 class="text-xl font-semibold text-gray-900">添加新资料</h3>
                 <button id="closeModalButton" class="text-gray-400 hover:text-gray-600">
@@ -105,13 +118,10 @@
                     </svg>
                 </button>
             </div>
-
-            <!-- 模态框内容 (表单) -->
+            <!-- 表单 -->
             <form id="addDocForm">
                 <div class="p-6 space-y-4">
-                    <!-- 错误提示 -->
                     <div id="formError" class="hidden p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
-
                     <div>
                         <label for="title" class="block text-sm font-medium text-gray-700 mb-1">标题</label>
                         <input type="text" name="title" id="title"
@@ -143,8 +153,7 @@
                             placeholder="https://..." required>
                     </div>
                 </div>
-
-                <!-- 模态框底部 -->
+                <!-- 底部 -->
                 <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
                     <button type="button" id="cancelButton"
                         class="px-5 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -169,26 +178,23 @@
         </div>
     </div>
 
-    <!-- 确认删除模态框 (Confirm Delete Modal) -->
+    <!-- 确认删除模态框 -->
     <div id="confirmDeleteModal"
         class="modal-overlay fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
         <div
             class="modal-content bg-white w-full max-w-md rounded-lg shadow-xl overflow-hidden transform scale-95 opacity-0">
-            <!-- 模态框头部 -->
+            <!-- 头部 -->
             <div class="flex items-start justify-between p-5 border-b">
                 <div class="flex items-center space-x-3">
                     <div
                         class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0">
-                        <!-- 警告图标 -->
                         <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900">
-                        确认删除
-                    </h3>
+                    <h3 class="text-lg font-semibold text-gray-900">确认删除</h3>
                 </div>
                 <button id="closeConfirmModalButton" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -197,16 +203,14 @@
                     </svg>
                 </button>
             </div>
-
-            <!-- 模态框内容 -->
+            <!-- 内容 -->
             <div class="p-6">
                 <p class="text-sm text-gray-600">
                     您确定要删除这份资料吗？此操作无法撤销。
                 </p>
                 <p id="confirmDeleteMessage" class="text-sm text-gray-700 font-medium mt-2"></p>
             </div>
-
-            <!-- 模态框底部 -->
+            <!-- 底部 -->
             <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
                 <button type="button" id="cancelDeleteButton"
                     class="px-5 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -221,45 +225,27 @@
     </div>
 
     <script type="module">
-        // --- 引入 Firebase SDK ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, doc, setDoc, deleteDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- Firebase 配置 ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyARjlq6rc5v3eGQ6YKrApjcYj239nGDvtk",
-            authDomain: "tiandiweb-74e55.firebaseapp.com",
-            projectId: "tiandiweb-74e55",
-            storageBucket: "tiandiweb-74e55.firebasestorage.app",
-            messagingSenderId: "1039130690359",
-            appId: "1:1039130690359:web:4c055ff762c2f319ec90b2",
-            measurementId: "G-YCFK7Q0BZL"
-        };
-
-        // --- 初始化 Firebase ---
-        let app, auth, db;
-
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            setLogLevel('Debug'); // 查看 Firestore 日志
-        } catch (e) {
-            console.error("Firebase 初始化失败:", e);
-        }
-
         // Wait for the DOM to be fully loaded before querying elements
         document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 腾讯云 TCB 配置 ---
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //
+            //  重要：请将 'YOUR_ENV_ID' 替换为您在腾讯云 CloudBase 控制台中获取的“环境ID”
+            //  请参考 instructions-tcb.md 文件获取详细指南
+            //
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            const TCB_ENV_ID = 'cloud1-9gfk1fl37e4b5266';
 
             // --- DOM 元素 ---
             const searchInput = document.getElementById('searchInput');
             const documentList = document.getElementById('documentList');
             const noResults = document.getElementById('noResults');
-            // Removed userIdDisplay element query
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
 
             // 模态框 DOM
-            const addDocModal = document.getElementById('addDocModal'); // This is the overlay
+            const addDocModal = document.getElementById('addDocModal');
             const modalContent = addDocModal.querySelector('.modal-content');
             const addDocButton = document.getElementById('addDocButton');
             const closeModalButton = document.getElementById('closeModalButton');
@@ -279,42 +265,72 @@
             const confirmDeleteMessage = document.getElementById('confirmDeleteMessage');
 
             // --- App State ---
-            let userId, documentsCollection, collectionPath;
+            let userId, db, documentsCollection;
             let allDocuments = []; // 用于搜索的本地缓存
             let docIdToDelete = null; // 存储待删除的文档ID
+            let dbWatcher = null; // 数据库监听器
 
-            // Check if Firebase init failed earlier
-            if (!app) {
-                noResults.innerHTML = '<p class="text-xl text-red-500">无法连接到数据库，请刷新页面。</p>';
-                noResults.classList.remove('hidden');
-                return; // Stop execution
+            // --- TCB 初始化 ---
+            let c;
+            try {
+                // [修复] 检查 cloudbase 变量是否存在
+                if (typeof cloudbase === 'undefined') {
+                    throw new Error("TCB SDK 加载失败 (cloudbase is not defined)。请检查网络连接或浏览器插件。");
+                }
+
+                if (TCB_ENV_ID === 'YOUR_ENV_ID') {
+                    throw new Error("请在 index.html 文件中配置您的 TCB_ENV_ID");
+                }
+
+                c = cloudbase.init({
+                    env: TCB_ENV_ID
+                });
+                console.log("TCB SDK 初始化成功");
+            } catch (e) {
+                console.error("TCB 初始化失败:", e);
+                showError(e.message);
+                return;
             }
 
-            // --- 模态框控制 ---
+            const auth = c.auth();
+            db = c.database();
+            // TCB 数据库的集合名称
+            const COLLECTION_NAME = "documents";
+            documentsCollection = db.collection(COLLECTION_NAME);
+
+            // --- 错误处理 ---
+            function showError(message) {
+                documentList.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.innerHTML = `<h3 class="mt-2 text-lg font-medium text-red-700">加载失败</h3><p class="text-sm mt-2">${message}</p><p class="text-xs mt-2 text-gray-500">请检查您的 TCB_ENV_ID 配置和网络连接。</p>`;
+            }
+
+            // --- 模态框控制 (与之前相同) ---
             function openModal() {
-                addDocForm.reset(); // 清空表单
+                addDocForm.reset();
                 formError.classList.add('hidden');
                 addDocModal.classList.remove('hidden');
                 setTimeout(() => {
-                    addDocModal.classList.remove('opacity-0'); // Use addDocModal as the overlay
+                    addDocModal.classList.remove('opacity-0');
                     modalContent.classList.remove('scale-95', 'opacity-0');
                     modalContent.classList.add('scale-100', 'opacity-100');
-                }, 10); // 触发过渡
+                }, 10);
             }
 
             function closeModal() {
-                addDocModal.classList.add('opacity-0'); // Use addDocModal as the overlay
+                addDocModal.classList.add('opacity-0');
                 modalContent.classList.add('scale-95', 'opacity-0');
                 modalContent.classList.remove('scale-100', 'opacity-100');
                 setTimeout(() => {
                     addDocModal.classList.add('hidden');
-                }, 200); // 等待过渡完成
+                }, 200);
             }
 
-            // --- 确认删除模态框控制 ---
             function openConfirmModal(docId, docTitle) {
                 docIdToDelete = docId;
-                confirmDeleteMessage.textContent = `即将删除: "${docTitle}"`; // 显示要删除的标题
+                confirmDeleteMessage.textContent = `即将删除: "${docTitle}"`;
                 confirmDeleteModal.classList.remove('hidden');
                 setTimeout(() => {
                     confirmDeleteModal.classList.remove('opacity-0');
@@ -329,63 +345,78 @@
                 confirmModalContent.classList.remove('scale-100', 'opacity-100');
                 setTimeout(() => {
                     confirmDeleteModal.classList.add('hidden');
-                    docIdToDelete = null; // 清除ID
-                    confirmDeleteMessage.textContent = ""; // 清空消息
+                    docIdToDelete = null;
+                    confirmDeleteMessage.textContent = "";
                 }, 200);
             }
 
-            // --- 辅助函数：根据分类获取标签颜色 ---
+            // --- 辅助函数：获取分类颜色 (与之前相同) ---
             function getCategoryClass(category) {
                 switch (category) {
-                    case "学术论文":
-                        return "bg-blue-100 text-blue-800";
-                    case "翻译资料":
-                        return "bg-green-100 text-green-800";
-                    case "行业报告":
-                        return "bg-purple-100 text-purple-800";
-                    case "内部文档":
-                        return "bg-yellow-100 text-yellow-800";
-                    default:
-                        return "bg-gray-100 text-gray-800";
+                    case "学术论文": return "bg-blue-100 text-blue-800";
+                    case "翻译资料": return "bg-green-100 text-green-800";
+                    case "行业报告": return "bg-purple-100 text-purple-800";
+                    case "内部文档": return "bg-yellow-100 text-yellow-800";
+                    default: return "bg-gray-100 text-gray-800";
                 }
             }
 
             // --- 核心功能：渲染文档列表 ---
             function renderDocuments(documents) {
-                // 清空当前列表
                 documentList.innerHTML = '';
 
-                // 检查是否有结果
                 if (documents.length === 0) {
-                    noResults.classList.remove('hidden');
+                    // 如果搜索结果为空
+                    if (allDocuments.length > 0) {
+                        // 数据库有数据，只是没搜到
+                        noResults.classList.remove('hidden');
+                        loadingState.classList.add('hidden');
+                        emptyState.classList.remove('hidden');
+                        emptyState.innerHTML = '<h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3><p class="text-sm mt-2">请尝试更改您的搜索关键词。</p>';
+                    } else {
+                        // 数据库也为空
+                        noResults.classList.remove('hidden');
+                        loadingState.classList.add('hidden');
+                        emptyState.classList.remove('hidden');
+                        emptyState.innerHTML = '<h3 class="mt-2 text-lg font-medium text-gray-900">资料库为空</h3><p class="text-sm mt-2">请点击“添加新资料”来分享您的第一份文档。</p>';
+                    }
                     documentList.classList.add('hidden');
                 } else {
                     noResults.classList.add('hidden');
                     documentList.classList.remove('hidden');
                 }
 
-                // 遍历文档并创建卡片
                 documents.forEach(doc => {
                     const categoryClasses = getCategoryClass(doc.category);
+                    // TCB 返回的日期可能是时间戳对象，也可能是字符串，确保格式化
+                    const displayDate = '无日期'; // 默认值
+
+                    try {
+                        // TCB 返回的日期可能是时间戳对象，也可能是字符串
+                        // 我们需要一个健壮的解析
+                        if (doc.date) {
+                            // 尝试将其创建为 Date 对象
+                            const dateObj = new Date(doc.date);
+                            // 检查是否为有效日期
+                            if (!isNaN(dateObj.getTime())) {
+                                displayDate = dateObj.toISOString().split('T')[0];
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("日期解析失败:", doc.date);
+                    }
 
                     const card = `
                         <div class="document-card bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
                             <div class="p-6 flex-grow">
-                                <!-- 分类标签 -->
                                 <span class="${categoryClasses} text-xs font-semibold px-2.5 py-0.5 rounded-full">${doc.category}</span>
-                                
-                                <!-- 标题 -->
                                 <h3 class="text-xl font-bold text-gray-900 mt-3 mb-2">${doc.title}</h3>
-                                
-                                <!-- 简介 -->
                                 <p class="text-gray-600 text-sm mb-4 line-clamp-3" title="${doc.description}">
                                     ${doc.description}
                                 </p>
                             </div>
-                            
-                            <!-- 卡片底部 -->
                             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center">
-                                <span class="text-gray-500 text-sm">${doc.date}</span>
+                                <span class="text-gray-500 text-sm">${displayDate}</span>
                                 <div class="flex space-x-2">
                                     <a href="${doc.link}" target="_blank" 
                                        class="text-sm font-medium text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
@@ -404,67 +435,86 @@
                 });
             }
 
-            // --- 核心功能：过滤文档 ---
+            // --- 核心功能：过滤文档 (与之前相同) ---
             function filterDocuments() {
                 const searchTerm = searchInput.value.toLowerCase().trim();
-
                 if (!searchTerm) {
-                    renderDocuments(allDocuments); // 如果搜索词为空，显示所有
+                    renderDocuments(allDocuments);
                     return;
                 }
-
                 const filtered = allDocuments.filter(doc => {
                     const titleMatch = doc.title.toLowerCase().includes(searchTerm);
                     const descriptionMatch = doc.description.toLowerCase().includes(searchTerm);
                     const categoryMatch = doc.category.toLowerCase().includes(searchTerm);
-
                     return titleMatch || descriptionMatch || categoryMatch;
                 });
-
                 renderDocuments(filtered);
             }
 
-            // --- 核心功能：加载 Firebase 文档 ---
+            // --- 核心功能：加载 TCB 文档 ---
             function loadDocuments() {
-                if (!documentsCollection) return;
+                console.log("开始监听数据库...");
+                noResults.classList.remove('hidden'); // 显示加载中
+                loadingState.classList.remove('hidden');
+                emptyState.classList.add('hidden');
 
-                // 使用 onSnapshot 实时监听数据变化
-                const q = query(documentsCollection);
-                onSnapshot(q, (querySnapshot) => {
-                    allDocuments = []; // 清空本地缓存
-                    querySnapshot.forEach((doc) => {
-                        allDocuments.push({ id: doc.id, ...doc.data() });
+                // 使用 TCB 的 watch 实时监听
+                dbWatcher = documentsCollection
+                    .watch({
+                        onChange: (snapshot) => {
+                            console.log("TCB 数据快照更新:", snapshot);
+                            if (snapshot.error) {
+                                console.error("TCB 监听错误:", snapshot.error);
+                                showError(`数据库监听失败: ${snapshot.error.message}。请检查您的 TCB 数据库安全规则。`);
+                                return;
+                            }
+
+                            allDocuments = snapshot.docs.map(doc => ({
+                                id: doc._id, // TCB 使用 _id 作为唯一标识
+                                ...doc // 展开文档数据
+                            }));
+
+                            // 移除 TCB 自动添加的 _id 和 _openid
+                            allDocuments.forEach(doc => {
+                                delete doc._id;
+                                delete doc._openid;
+                            });
+
+                            // [新增] 在客户端进行排序 (带安全检查)
+                            allDocuments.sort((a, b) => {
+                                const dateA = a.date ? new Date(a.date).getTime() : 0;
+                                const dateB = b.date ? new Date(b.date).getTime() : 0;
+                                // 检查无效日期
+                                if (isNaN(dateA)) dateA = 0;
+                                if (isNaN(dateB)) dateB = 0;
+                                return dateB - dateA;
+                            });
+
+                            // 重新渲染
+                            filterDocuments();
+                        },
+                        onError: (error) => {
+                            console.error("TCB 监听器发生严重错误:", error);
+                            showError(`数据库连接断开: ${error.message}`);
+                        }
                     });
-
-                    // Firestore 不保证顺序，我们在客户端排序
-                    // 按日期倒序 (最新的在前)
-                    allDocuments.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                    // 使用 filterDocuments 重新渲染，以保留当前的搜索状态
-                    filterDocuments();
-
-                }, (error) => {
-                    console.error("加载文档失败: ", error);
-                    noResults.innerHTML = '<p class="text-xl text-red-500">加载资料失败，请检查网络连接。</p>';
-                    noResults.classList.remove('hidden');
-                });
             }
 
             // --- 核心功能：删除文档 ---
             async function handleDeleteClick(docId) {
-                if (!docId || !collectionPath) {
-                    console.error("无法删除：缺少文档ID或集合路径");
+                if (!docId || !documentsCollection) {
+                    console.error("无法删除：缺少文档ID或集合");
                     return;
                 }
-
                 console.log(`正在删除文档: ${docId}`);
                 try {
-                    const docRef = doc(db, collectionPath, docId);
-                    await deleteDoc(docRef);
-                    // onSnapshot 会自动处理UI更新
+                    // TCB 使用 .doc(id).remove()
+                    await documentsCollection.doc(docId).remove();
+                    // watch 会自动处理UI更新
+                    console.log("删除成功");
                 } catch (error) {
                     console.error("删除失败: ", error);
-                    // 可以在这里向用户显示一个非阻塞的错误提示
+                    alert(`删除失败: ${error.message}`); // 简单提示
                 }
             }
 
@@ -485,19 +535,18 @@
                         description: formData.get('description'),
                         category: formData.get('category'),
                         link: formData.get('link'),
-                        date: new Date().toISOString().split('T')[0] // 自动设置日期
+                        // TCB 推荐使用 db.serverDate() 来获取服务器时间
+                        date: db.serverDate()
                     };
 
-                    // 简单验证
                     if (!newDoc.title || !newDoc.description || !newDoc.category || !newDoc.link) {
                         throw new Error("请填写所有字段。");
                     }
 
-                    // 添加到 Firestore
-                    await addDoc(documentsCollection, newDoc);
+                    // TCB 使用 .add()
+                    await documentsCollection.add(newDoc);
 
                     closeModal(); // 成功后关闭模态框
-
                 } catch (error) {
                     console.error("保存失败: ", error);
                     formError.textContent = `保存失败: ${error.message}`;
@@ -509,36 +558,26 @@
                 }
             }
 
-            // --- 事件监听 ---
-
-            // 监听搜索框的输入
+            // --- 事件监听 (与之前相同) ---
             searchInput.addEventListener('keyup', filterDocuments);
-
-            // 监听模态框按钮
             addDocButton.addEventListener('click', openModal);
             closeModalButton.addEventListener('click', closeModal);
             cancelButton.addEventListener('click', closeModal);
             addDocForm.addEventListener('submit', saveDocument);
 
-            // 监听删除按钮 (Event Delegation)
             documentList.addEventListener('click', (event) => {
                 const deleteButton = event.target.closest('.delete-button');
                 if (deleteButton) {
                     event.preventDefault();
                     const docId = deleteButton.dataset.docId;
-
-                    // 找到文档标题
                     const docToDelete = allDocuments.find(d => d.id === docId);
                     const docTitle = docToDelete ? docToDelete.title : "未知资料";
-
                     if (docId) {
-                        // 打开确认模态框，而不是直接删除
                         openConfirmModal(docId, docTitle);
                     }
                 }
             });
 
-            // 监听确认删除模态框按钮
             closeConfirmModalButton.addEventListener('click', closeConfirmModal);
             cancelDeleteButton.addEventListener('click', closeConfirmModal);
             confirmDeleteButton.addEventListener('click', () => {
@@ -548,41 +587,35 @@
                 closeConfirmModal();
             });
 
-            // --- 认证和启动 ---
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    // 用户已登录
-                    userId = user.uid;
-                    console.log("用户已认证:", userId);
+            // --- TCB 认证和启动 ---
+            async function main() {
+                try {
+                    // 1. 检查当前登录状态
+                    const loginState = await auth.getLoginState();
+                    if (!loginState) {
+                        console.log("用户未登录，尝试匿名登录...");
+                        // 2. 如果未登录，执行匿名登录
+                        await auth.signInAnonymously();
+                        const newState = await auth.getLoginState();
+                        userId = newState.user.uid;
+                        console.log("TCB 匿名登录成功:", userId);
+                    } else {
+                        userId = loginState.user.uid;
+                        console.log("TCB 用户已认证:", userId);
+                    }
 
-                    // 【修改 1】: 定义数据库集合路径
-                    // 不再使用复杂的 /artifacts/ 路径，直接使用一个简单的集合名
-                    collectionPath = `documents`; // 您可以随意命名，例如 'my_docs'
-                    documentsCollection = collection(db, collectionPath);
-
-                    // 加载文档
+                    // 3. 开始加载文档
                     loadDocuments();
 
-                } else {
-                    // 用户未登录，尝试登录
-                    console.log("用户未登录，尝试匿名登录...");
-                    try {
-                        // 【修改 2】: 移除 IF/ELSE，始终使用匿名登录
-                        await signInAnonymously(auth);
-
-                        // onAuthStateChanged 将再次触发
-                    } catch (error) {
-                        console.error("登录失败:", error);
-                        // Removed userIdDisplay.textContent update
-                        noResults.innerHTML = '<p class="text-xl text-red-500">认证失败，无法加载资料库。</p>';
-                        noResults.classList.remove('hidden');
-                    }
+                } catch (error) {
+                    console.error("TCB 认证或登录失败:", error);
+                    showError(`认证失败: ${error.message}。请检查您的 TCB 环境是否开启了匿名登录。`);
                 }
-            });
+            }
 
+            main(); // 启动应用
 
         }); // End of DOMContentLoaded
-
     </script>
 </body>
 
