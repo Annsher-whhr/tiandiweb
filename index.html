@@ -389,7 +389,7 @@
                 documents.forEach(doc => {
                     const categoryClasses = getCategoryClass(doc.category);
                     // TCB 返回的日期可能是时间戳对象，也可能是字符串，确保格式化
-                    const displayDate = '无日期'; // 默认值
+                    let displayDate = '无日期'; // 默认值
 
                     try {
                         // TCB 返回的日期可能是时间戳对象，也可能是字符串
@@ -469,16 +469,45 @@
                                 return;
                             }
 
-                            allDocuments = snapshot.docs.map(doc => ({
-                                id: doc._id, // TCB 使用 _id 作为唯一标识
-                                ...doc // 展开文档数据
-                            }));
+                            allDocuments = []; // 清空本地缓存
+                            snapshot.docs.forEach((doc) => {
+                                // [诊断代码] 打印 doc.date 的结构
+                                console.log("【诊断】正在检查 doc.date 对象:", doc.date, "它的类型是:", typeof doc.date);
 
-                            // 移除 TCB 自动添加的 _id 和 _openid
-                            allDocuments.forEach(doc => {
-                                delete doc._id;
-                                delete doc._openid;
+                                // 我们必须在这里立即处理它
+                                let parsableDate = null;
+
+                                // [最终修复 v5 - 基于数据库截图 image_ce88bd.png]
+                                // 数据库截图证明，doc.date 是一个标准日期字符串
+                                if (doc.date && typeof doc.date === 'string') {
+                                    // 1. 它已经是一个字符串了，直接用它！
+                                    parsableDate = doc.date;
+                                }
+                                // 备用方案 (以防万一，它是一个实时对象)
+                                else if (doc.date && typeof doc.date.toDate === 'function') {
+                                    parsableDate = doc.date.toDate().toISOString();
+                                }
+                                // 备用方案 (以防万一，控制台的对象也是对的)
+                                else if (doc.date && typeof doc.date === 'object' && doc.date.$date) {
+                                    const timestamp = Number(doc.date.$date);
+                                    if (!isNaN(timestamp)) {
+                                        parsableDate = new Date(timestamp).toISOString();
+                                    }
+                                }
+
+                                const newDoc = {
+                                    id: doc._id,
+                                    ...doc,
+                                    date: parsableDate // 用可解析的 ISO 字符串覆盖 date 字段
+                                };
+
+                                delete newDoc._openid;
+                                delete newDoc._id; // 已经有 id
+                                allDocuments.push(newDoc);
                             });
+
+                            // [修改] 排序逻辑现在可以安全地 new Date()
+
 
                             // [新增] 在客户端进行排序 (带安全检查)
                             allDocuments.sort((a, b) => {
