@@ -15,12 +15,13 @@
             font-family: 'Inter', sans-serif;
         }
 
-        @supports (-webkit-line-clamp: 3) {
+        @supports ((-webkit-line-clamp: 3) or (line-clamp: 3)) {
             .line-clamp-3 {
                 overflow: hidden;
                 text-overflow: ellipsis;
                 display: -webkit-box;
                 -webkit-line-clamp: 3;
+                line-clamp: 3;
                 -webkit-box-orient: vertical;
             }
         }
