@@ -4,15 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文献资料库 (腾讯云版)</title>
+    <title>中西天地分隔神话资料网站</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- 引入腾讯云 CloudBase SDK -->
-    <!-- [修复] 切换到腾讯云官方另一个更稳定的 CDN 地址 -->
     <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.21.6/cloudbase.full.js?v=1"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
 
         @supports ((-webkit-line-clamp: 3) or (line-clamp: 3)) {
@@ -26,6 +28,142 @@
             }
         }
 
+        /* 首页容器（包含导航栏和图片） */
+        .home-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        /* 首页单张图片样式 */
+        .home-image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .home-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 其他页面的背景图片样式 */
+        .page-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .page-background img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.4);
+        }
+
+        /* 透明导航栏样式 */
+        .transparent-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            transition: background 0.3s ease;
+        }
+
+        .transparent-nav:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* 其他页面的固定导航栏 */
+        .transparent-nav.fixed-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        /* 首页导航栏（可滚动） */
+        .transparent-nav.scrollable-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            color: white;
+            font-weight: 600;
+            border-bottom: 2px solid white;
+        }
+
+        /* 内容区域样式 */
+        .content-section {
+            position: relative;
+            z-index: 10;
+            background: white;
+            min-height: 100vh;
+        }
+
+        /* 首页内容区域 */
+        .content-section.home-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 其他页面内容区域 */
+        .content-section.other-content {
+            margin-top: 80px;
+            padding-top: 0;
+        }
+
+        /* 资料卡片交互样式 */
+        .document-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .document-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 图标按钮样式 */
+        .icon-button {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .icon-button:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        /* 模态框样式 */
         .modal-overlay {
             transition: opacity 0.2s ease-in-out;
         }
@@ -33,76 +171,203 @@
         .modal-content {
             transition: transform 0.2s ease-in-out;
         }
+
+        /* 页面切换动画 */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 关于页面样式 */
+        .about-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
 
-    <!-- 导航栏 -->
-    <nav class="bg-white shadow-md">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="text-2xl font-bold text-gray-800">文献资料库</div>
-        </div>
-    </nav>
-
-    <!-- 主内容区 -->
-    <main class="container mx-auto px-6 py-8">
-
-        <!-- 搜索和操作栏 -->
-        <div class="mb-8 md:flex md:items-center md:justify-between">
-            <!-- 搜索栏 -->
-            <div class="relative flex-grow">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+    <!-- 首页包装器（包含导航栏和图片） -->
+    <div id="homeWrapper" class="home-wrapper">
+        <!-- 透明导航栏 -->
+        <nav class="transparent-nav scrollable-nav" id="mainNav">
+            <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                <div class="text-xl font-bold nav-link">中西天地分隔神话资料网站</div>
+                <div class="flex items-center space-x-6 flex-1 justify-center">
+                    <a href="#" class="nav-link active" data-page="home">首页</a>
+                    <a href="#" class="nav-link" data-page="juedi">绝地天通</a>
+                    <a href="#" class="nav-link" data-page="babel">巴别塔</a>
+                    <a href="#" class="nav-link" data-page="about">关于</a>
                 </div>
-                <input type="text" id="searchInput"
-                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="搜索标题、简介或分类 (例如: 论文)...">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="searchIconButton" class="icon-button text-white" title="搜索">
+                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                        <!-- 小搜索栏（在放大镜下方弹出） -->
+                        <div id="smallSearchBar" class="hidden absolute top-full right-0 mt-2 z-50">
+                            <div
+                                class="relative bg-white rounded-lg shadow-lg border border-gray-200 p-2 min-w-[300px]">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input type="text" id="searchInput"
+                                    class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    placeholder="搜索标题、简介或分类...">
+                            </div>
+                        </div>
+                    </div>
+                    <button id="addDocButton" class="icon-button text-white" title="添加新资料">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </button>
+                </div>
             </div>
+        </nav>
+        <!-- 首页单张图片 -->
+        <div id="homeImageContainer" class="home-image-container">
+            <img src="image/home06.png" alt="Home Image">
+        </div>
+    </div>
 
-            <!-- 添加资料按钮 -->
-            <button id="addDocButton"
-                class="w-full md:w-auto mt-4 md:mt-0 md:ml-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-colors">
-                添加新资料
-            </button>
+    <!-- 其他页面背景图片 -->
+    <div id="pageBackground" class="page-background" style="display: none;">
+        <img src="image/home06.png" alt="Page Background">
+    </div>
+
+    <!-- 内容区域 -->
+    <div id="contentSection" class="content-section home-content">
+        <!-- 首页内容 -->
+        <div id="homePage" class="page active">
+            <main class="container mx-auto px-6 py-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-8">全部资料</h1>
+                <!-- 资料卡片网格 -->
+                <div id="documentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 资料卡片将在这里动态生成 -->
+                </div>
+
+                <!-- 加载中/无结果 -->
+                <div id="noResults" class="hidden text-center text-gray-500 mt-12">
+                    <!-- 初始加载状态 -->
+                    <div id="loadingState">
+                        <svg class="animate-spin mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-900">正在加载资料...</h3>
+                        <p class="text-sm mt-2">请稍候，正在连接到数据库。</p>
+                    </div>
+                    <!-- 无结果状态 -->
+                    <div id="emptyState" class="hidden">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
+                        <p class="text-sm mt-2">请尝试更改您的搜索关键词，或添加第一份资料。</p>
+                    </div>
+                </div>
+            </main>
         </div>
 
-        <!-- 资料卡片网格 -->
-        <div id="documentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- 资料卡片将在这里动态生成 -->
+        <!-- 绝地天通页面 -->
+        <div id="juediPage" class="page">
+            <main class="container mx-auto px-6 py-8">
+                <h1 class="text-3xl font-bold text-white mb-8 drop-shadow-lg">绝地天通</h1>
+                <div id="juediDocumentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 资料卡片将在这里动态生成 -->
+                </div>
+                <div id="juediNoResults" class="hidden text-center text-gray-500 mt-12">
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">暂无绝地天通相关资料</h3>
+                </div>
+            </main>
         </div>
 
-        <!-- 加载中/无结果 -->
-        <div id="noResults" class="hidden text-center text-gray-500 mt-12">
-            <!-- 初始加载状态 -->
-            <div id="loadingState">
-                <svg class="animate-spin mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-                <h3 class="mt-2 text-lg font-medium text-gray-900">正在加载资料...</h3>
-                <p class="text-sm mt-2">请稍候，正在连接到数据库。</p>
-            </div>
-            <!-- 无结果状态 -->
-            <div id="emptyState" class="hidden">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                    stroke-width="1">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 10v.01M10 10h.01M10 10l.01.01M10 10l-.01.01M10 10l.01-.01M10 10l-.01-.01M14 10v.01M14 10h.01M14 10l.01.01M14 10l-.01.01M14 10l.01-.01M14 10l-.01-.01M18 10v.01M18 10h.01M18 10l.01.01M18 10l-.01.01M18 10l.01-.01M18 10l-.01-.01M6 10v.01M6 10h.01M6 10l.01.01M6 10l-.01.01M6 10l.01-.01M6 10l-.01-.01M10 14v.01M10 14h.01M10 14l.01.01M10 14l-.01.01M10 14l.01-.01M10 14l-.01-.01M10 18v.01M10 18h.01M10 18l.01.01M10 18l-.01.01M10 18l.01-.01M10 18l-.01-.01M10 6v.01M10 6h.01M10 6l.01.01M10 6l-.01.01M10 6l.01-.01M10 6l-.01-.01" />
-                </svg>
-                <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
-                <p class="text-sm mt-2">请尝试更改您的搜索关键词，或添加第一份资料。</p>
-            </div>
+        <!-- 巴别塔页面 -->
+        <div id="babelPage" class="page">
+            <main class="container mx-auto px-6 py-8">
+                <h1 class="text-3xl font-bold text-white mb-8 drop-shadow-lg">巴别塔</h1>
+                <div id="babelDocumentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 资料卡片将在这里动态生成 -->
+                </div>
+                <div id="babelNoResults" class="hidden text-center text-gray-500 mt-12">
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">暂无巴别塔相关资料</h3>
+                </div>
+            </main>
         </div>
 
-    </main>
+        <!-- 关于页面 -->
+        <div id="aboutPage" class="page">
+            <main class="container mx-auto px-6 py-8">
+                <div class="about-section">
+                    <h1 class="text-4xl font-bold text-white mb-8 text-center drop-shadow-lg">关于</h1>
+                    <div class="bg-white rounded-lg shadow-lg p-8">
+                        <div class="text-center mb-8">
+                            <div
+                                class="w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-6 flex items-center justify-center">
+                                <span class="text-4xl text-white font-bold">资</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">网站资料整理者</h2>
+                            <p class="text-gray-600">致力于中西天地分隔神话研究的资料收集与整理</p>
+                        </div>
+                        <div class="space-y-6 text-gray-700">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-3">研究背景</h3>
+                                <p class="leading-relaxed">
+                                    本网站致力于收集和整理与"绝地天通"和"巴别塔"相关的神话资料，探索中西文化中关于天地分隔的古老传说。
+                                    这些神话故事反映了不同文明对宇宙秩序、人类与神明关系的深刻思考。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-3">资料范围</h3>
+                                <p class="leading-relaxed">
+                                    本网站收录了包括学术论文、翻译资料、研究报告等多种类型的文献，涵盖了中国古代"绝地天通"神话
+                                    和西方"巴别塔"传说的相关研究资料，为研究者提供全面的参考资料。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-3">联系方式</h3>
+                                <p class="leading-relaxed">
+                                    如果您有相关的资料想要分享，或对网站有任何建议，欢迎通过网站功能添加新资料。
+                                    我们致力于构建一个开放、共享的研究资料平台。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
 
     <!-- 添加资料模态框 (Modal) -->
     <div id="addDocModal"
@@ -145,6 +410,16 @@
                             <option value="翻译资料">翻译资料</option>
                             <option value="行业报告">行业报告</option>
                             <option value="内部文档">内部文档</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="mythTag" class="block text-sm font-medium text-gray-700 mb-1">神话标签</label>
+                        <select name="mythTag" id="mythTag"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required>
+                            <option value="">请选择一个标签</option>
+                            <option value="绝地天通">绝地天通</option>
+                            <option value="巴别塔">巴别塔</option>
                         </select>
                     </div>
                     <div>
@@ -230,20 +505,25 @@
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- 腾讯云 TCB 配置 ---
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //
-            //  重要：请将 'YOUR_ENV_ID' 替换为您在腾讯云 CloudBase 控制台中获取的“环境ID”
-            //  请参考 instructions-tcb.md 文件获取详细指南
-            //
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             const TCB_ENV_ID = 'cloud1-9gfk1fl37e4b5266';
 
             // --- DOM 元素 ---
             const searchInput = document.getElementById('searchInput');
+            const smallSearchBar = document.getElementById('smallSearchBar');
+            const searchIconButton = document.getElementById('searchIconButton');
+            const mainNav = document.getElementById('mainNav');
+            const contentSection = document.getElementById('contentSection');
+            const homeImageContainer = document.getElementById('homeImageContainer');
+            const homeWrapper = document.getElementById('homeWrapper');
+            const pageBackground = document.getElementById('pageBackground');
             const documentList = document.getElementById('documentList');
+            const juediDocumentList = document.getElementById('juediDocumentList');
+            const babelDocumentList = document.getElementById('babelDocumentList');
             const noResults = document.getElementById('noResults');
             const loadingState = document.getElementById('loadingState');
             const emptyState = document.getElementById('emptyState');
+            const juediNoResults = document.getElementById('juediNoResults');
+            const babelNoResults = document.getElementById('babelNoResults');
 
             // 模态框 DOM
             const addDocModal = document.getElementById('addDocModal');
@@ -265,16 +545,97 @@
             const confirmDeleteButton = document.getElementById('confirmDeleteButton');
             const confirmDeleteMessage = document.getElementById('confirmDeleteMessage');
 
+            // 页面导航元素
+            const navLinks = document.querySelectorAll('.nav-link[data-page]');
+            const pages = {
+                home: document.getElementById('homePage'),
+                juedi: document.getElementById('juediPage'),
+                babel: document.getElementById('babelPage'),
+                about: document.getElementById('aboutPage')
+            };
+
             // --- App State ---
             let userId, db, documentsCollection;
             let allDocuments = []; // 用于搜索的本地缓存
             let docIdToDelete = null; // 存储待删除的文档ID
             let dbWatcher = null; // 数据库监听器
+            let currentPage = 'home'; // 当前页面
+
+            // --- 页面路由功能 ---
+            function switchPage(pageName) {
+                // 隐藏所有页面
+                Object.values(pages).forEach(page => {
+                    page.classList.remove('active');
+                });
+
+                // 移除所有导航链接的active状态
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+
+                // 显示目标页面
+                if (pages[pageName]) {
+                    pages[pageName].classList.add('active');
+                    currentPage = pageName;
+
+                    // 激活对应的导航链接
+                    const activeLink = document.querySelector(`.nav-link[data-page="${pageName}"]`);
+                    if (activeLink) {
+                        activeLink.classList.add('active');
+                    }
+
+                    // 控制首页图片和其他页面背景
+                    if (pageName === 'home') {
+                        // 首页：显示包装器和图片，隐藏背景
+                        if (homeWrapper) homeWrapper.style.display = 'block';
+                        if (pageBackground) pageBackground.style.display = 'none';
+                        // 导航栏可滚动（绝对定位在包装器内）
+                        mainNav.classList.remove('fixed-nav');
+                        mainNav.classList.add('scrollable-nav');
+                        // 确保导航栏在包装器内
+                        if (homeWrapper && mainNav.parentNode !== homeWrapper) {
+                            homeWrapper.insertBefore(mainNav, homeWrapper.firstChild);
+                        }
+                        // 内容区域在图片下方
+                        contentSection.classList.remove('other-content');
+                        contentSection.classList.add('home-content');
+                        // 滚动到顶部
+                        window.scrollTo(0, 0);
+                    } else {
+                        // 其他页面：隐藏包装器，显示背景
+                        if (homeWrapper) homeWrapper.style.display = 'none';
+                        if (pageBackground) pageBackground.style.display = 'block';
+                        // 导航栏固定
+                        mainNav.classList.remove('scrollable-nav');
+                        mainNav.classList.add('fixed-nav');
+                        // 确保导航栏在body内（不在包装器内）
+                        if (mainNav.parentNode === homeWrapper) {
+                            document.body.insertBefore(mainNav, document.body.firstChild);
+                        }
+                        // 内容区域在导航栏下方
+                        contentSection.classList.remove('home-content');
+                        contentSection.classList.add('other-content');
+                        // 滚动到顶部
+                        window.scrollTo(0, 0);
+                    }
+
+                    // 根据页面过滤资料
+                    filterAndRenderDocuments();
+                }
+            }
+
+            // 导航链接点击事件
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageName = link.getAttribute('data-page');
+                    switchPage(pageName);
+                });
+            });
 
             // --- TCB 初始化 ---
             let c;
             try {
-                // [修复] 检查 cloudbase 变量是否存在
                 if (typeof cloudbase === 'undefined') {
                     throw new Error("TCB SDK 加载失败 (cloudbase is not defined)。请检查网络连接或浏览器插件。");
                 }
@@ -295,7 +656,6 @@
 
             const auth = c.auth();
             db = c.database();
-            // TCB 数据库的集合名称
             const COLLECTION_NAME = "documents";
             documentsCollection = db.collection(COLLECTION_NAME);
 
@@ -308,7 +668,7 @@
                 emptyState.innerHTML = `<h3 class="mt-2 text-lg font-medium text-red-700">加载失败</h3><p class="text-sm mt-2">${message}</p><p class="text-xs mt-2 text-gray-500">请检查您的 TCB_ENV_ID 配置和网络连接。</p>`;
             }
 
-            // --- 模态框控制 (与之前相同) ---
+            // --- 模态框控制 ---
             function openModal() {
                 addDocForm.reset();
                 formError.classList.add('hidden');
@@ -351,7 +711,7 @@
                 }, 200);
             }
 
-            // --- 辅助函数：获取分类颜色 (与之前相同) ---
+            // --- 辅助函数：获取分类颜色 ---
             function getCategoryClass(category) {
                 switch (category) {
                     case "学术论文": return "bg-blue-100 text-blue-800";
@@ -362,43 +722,39 @@
                 }
             }
 
+            // --- 辅助函数：获取神话标签颜色 ---
+            function getMythTagClass(mythTag) {
+                switch (mythTag) {
+                    case "绝地天通": return "bg-orange-100 text-orange-800";
+                    case "巴别塔": return "bg-indigo-100 text-indigo-800";
+                    default: return "bg-gray-100 text-gray-800";
+                }
+            }
+
             // --- 核心功能：渲染文档列表 ---
-            function renderDocuments(documents) {
-                documentList.innerHTML = '';
+            function renderDocuments(documents, targetElement, noResultsElement) {
+                targetElement.innerHTML = '';
 
                 if (documents.length === 0) {
-                    // 如果搜索结果为空
-                    if (allDocuments.length > 0) {
-                        // 数据库有数据，只是没搜到
-                        noResults.classList.remove('hidden');
-                        loadingState.classList.add('hidden');
-                        emptyState.classList.remove('hidden');
-                        emptyState.innerHTML = '<h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3><p class="text-sm mt-2">请尝试更改您的搜索关键词。</p>';
-                    } else {
-                        // 数据库也为空
-                        noResults.classList.remove('hidden');
-                        loadingState.classList.add('hidden');
-                        emptyState.classList.remove('hidden');
-                        emptyState.innerHTML = '<h3 class="mt-2 text-lg font-medium text-gray-900">资料库为空</h3><p class="text-sm mt-2">请点击“添加新资料”来分享您的第一份文档。</p>';
+                    targetElement.classList.add('hidden');
+                    if (noResultsElement) {
+                        noResultsElement.classList.remove('hidden');
                     }
-                    documentList.classList.add('hidden');
                 } else {
-                    noResults.classList.add('hidden');
-                    documentList.classList.remove('hidden');
+                    targetElement.classList.remove('hidden');
+                    if (noResultsElement) {
+                        noResultsElement.classList.add('hidden');
+                    }
                 }
 
                 documents.forEach(doc => {
                     const categoryClasses = getCategoryClass(doc.category);
-                    // TCB 返回的日期可能是时间戳对象，也可能是字符串，确保格式化
-                    let displayDate = '无日期'; // 默认值
+                    const mythTagClasses = doc.mythTag ? getMythTagClass(doc.mythTag) : '';
+                    let displayDate = '无日期';
 
                     try {
-                        // TCB 返回的日期可能是时间戳对象，也可能是字符串
-                        // 我们需要一个健壮的解析
                         if (doc.date) {
-                            // 尝试将其创建为 Date 对象
                             const dateObj = new Date(doc.date);
-                            // 检查是否为有效日期
                             if (!isNaN(dateObj.getTime())) {
                                 displayDate = dateObj.toISOString().split('T')[0];
                             }
@@ -408,9 +764,12 @@
                     }
 
                     const card = `
-                        <div class="document-card bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+                        <div class="document-card bg-white rounded-lg shadow-lg overflow-hidden flex flex-col" data-doc-id="${doc.id}" data-doc-link="${doc.link}">
                             <div class="p-6 flex-grow">
-                                <span class="${categoryClasses} text-xs font-semibold px-2.5 py-0.5 rounded-full">${doc.category}</span>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <span class="${categoryClasses} text-xs font-semibold px-2.5 py-0.5 rounded-full">${doc.category}</span>
+                                    ${doc.mythTag ? `<span class="${mythTagClasses} text-xs font-semibold px-2.5 py-0.5 rounded-full">${doc.mythTag}</span>` : ''}
+                                </div>
                                 <h3 class="text-xl font-bold text-gray-900 mt-3 mb-2">${doc.title}</h3>
                                 <p class="text-gray-600 text-sm mb-4 line-clamp-3" title="${doc.description}">
                                     ${doc.description}
@@ -418,48 +777,124 @@
                             </div>
                             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center">
                                 <span class="text-gray-500 text-sm">${displayDate}</span>
-                                <div class="flex space-x-2">
-                                    <a href="${doc.link}" target="_blank" 
-                                       class="text-sm font-medium text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                       查看详情
-                                    </a>
-                                    <button
-                                       class="delete-button text-sm font-medium text-red-600 bg-red-100 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors"
-                                       data-doc-id="${doc.id}">
-                                       删除
+                                <div class="relative">
+                                    <button class="delete-button text-gray-600 hover:text-gray-900 text-xl font-bold px-2 py-1 transition-colors" data-doc-id="${doc.id}" title="更多选项">
+                                        ...
                                     </button>
+                                    <!-- 删除选项下拉菜单 -->
+                                    <div class="delete-menu hidden absolute right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] z-10">
+                                        <button class="delete-option w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors" data-doc-id="${doc.id}">
+                                            删除
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
-                    documentList.innerHTML += card;
+                    targetElement.innerHTML += card;
+                });
+
+                // 添加卡片点击事件（整个卡片可点击）
+                targetElement.querySelectorAll('.document-card').forEach(card => {
+                    const link = card.getAttribute('data-doc-link');
+                    card.addEventListener('click', (e) => {
+                        // 如果点击的是删除按钮或菜单，不打开链接
+                        if (e.target.classList.contains('delete-button') ||
+                            e.target.closest('.delete-button') ||
+                            e.target.classList.contains('delete-menu') ||
+                            e.target.closest('.delete-menu') ||
+                            e.target.classList.contains('delete-option')) {
+                            return;
+                        }
+                        window.open(link, '_blank');
+                    });
+                });
+
+                // 添加三个点按钮事件（显示/隐藏删除菜单）
+                targetElement.querySelectorAll('.delete-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const menu = button.nextElementSibling;
+                        // 关闭其他所有菜单
+                        targetElement.querySelectorAll('.delete-menu').forEach(m => {
+                            if (m !== menu) {
+                                m.classList.add('hidden');
+                            }
+                        });
+                        // 切换当前菜单
+                        if (menu) {
+                            menu.classList.toggle('hidden');
+                        }
+                    });
+                });
+
+                // 添加删除选项事件
+                targetElement.querySelectorAll('.delete-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const docId = option.getAttribute('data-doc-id');
+                        const docToDelete = allDocuments.find(d => d.id === docId);
+                        const docTitle = docToDelete ? docToDelete.title : "未知资料";
+                        if (docId) {
+                            // 关闭菜单
+                            option.closest('.delete-menu').classList.add('hidden');
+                            openConfirmModal(docId, docTitle);
+                        }
+                    });
+                });
+
+                // 点击页面其他地方时关闭所有菜单
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-button') && !e.target.closest('.delete-menu')) {
+                        targetElement.querySelectorAll('.delete-menu').forEach(menu => {
+                            menu.classList.add('hidden');
+                        });
+                    }
                 });
             }
 
-            // --- 核心功能：过滤文档 (与之前相同) ---
-            function filterDocuments() {
-                const searchTerm = searchInput.value.toLowerCase().trim();
-                if (!searchTerm) {
-                    renderDocuments(allDocuments);
-                    return;
+            // --- 核心功能：过滤和渲染文档 ---
+            function filterAndRenderDocuments() {
+                const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                let filtered = allDocuments;
+
+                // 根据当前页面过滤
+                if (currentPage === 'juedi') {
+                    filtered = filtered.filter(doc => doc.mythTag === '绝地天通');
+                } else if (currentPage === 'babel') {
+                    filtered = filtered.filter(doc => doc.mythTag === '巴别塔');
                 }
-                const filtered = allDocuments.filter(doc => {
-                    const titleMatch = doc.title.toLowerCase().includes(searchTerm);
-                    const descriptionMatch = doc.description.toLowerCase().includes(searchTerm);
-                    const categoryMatch = doc.category.toLowerCase().includes(searchTerm);
-                    return titleMatch || descriptionMatch || categoryMatch;
-                });
-                renderDocuments(filtered);
+
+                // 根据搜索词过滤
+                if (searchTerm) {
+                    filtered = filtered.filter(doc => {
+                        const titleMatch = doc.title.toLowerCase().includes(searchTerm);
+                        const descriptionMatch = doc.description.toLowerCase().includes(searchTerm);
+                        const categoryMatch = doc.category.toLowerCase().includes(searchTerm);
+                        const mythTagMatch = doc.mythTag ? doc.mythTag.toLowerCase().includes(searchTerm) : false;
+                        return titleMatch || descriptionMatch || categoryMatch || mythTagMatch;
+                    });
+                }
+
+                // 渲染到对应页面
+                if (currentPage === 'home') {
+                    renderDocuments(filtered, documentList, noResults);
+                } else if (currentPage === 'juedi') {
+                    renderDocuments(filtered, juediDocumentList, juediNoResults);
+                } else if (currentPage === 'babel') {
+                    renderDocuments(filtered, babelDocumentList, babelNoResults);
+                }
             }
 
             // --- 核心功能：加载 TCB 文档 ---
             function loadDocuments() {
                 console.log("开始监听数据库...");
-                noResults.classList.remove('hidden'); // 显示加载中
-                loadingState.classList.remove('hidden');
-                emptyState.classList.add('hidden');
+                if (noResults) {
+                    noResults.classList.remove('hidden');
+                    loadingState.classList.remove('hidden');
+                    emptyState.classList.add('hidden');
+                }
 
-                // 使用 TCB 的 watch 实时监听
                 dbWatcher = documentsCollection
                     .watch({
                         onChange: (snapshot) => {
@@ -470,26 +905,15 @@
                                 return;
                             }
 
-                            allDocuments = []; // 清空本地缓存
+                            allDocuments = [];
                             snapshot.docs.forEach((doc) => {
-                                // [诊断代码] 打印 doc.date 的结构
-                                console.log("【诊断】正在检查 doc.date 对象:", doc.date, "它的类型是:", typeof doc.date);
-
-                                // 我们必须在这里立即处理它
                                 let parsableDate = null;
 
-                                // [最终修复 v5 - 基于数据库截图 image_ce88bd.png]
-                                // 数据库截图证明，doc.date 是一个标准日期字符串
                                 if (doc.date && typeof doc.date === 'string') {
-                                    // 1. 它已经是一个字符串了，直接用它！
                                     parsableDate = doc.date;
-                                }
-                                // 备用方案 (以防万一，它是一个实时对象)
-                                else if (doc.date && typeof doc.date.toDate === 'function') {
+                                } else if (doc.date && typeof doc.date.toDate === 'function') {
                                     parsableDate = doc.date.toDate().toISOString();
-                                }
-                                // 备用方案 (以防万一，控制台的对象也是对的)
-                                else if (doc.date && typeof doc.date === 'object' && doc.date.$date) {
+                                } else if (doc.date && typeof doc.date === 'object' && doc.date.$date) {
                                     const timestamp = Number(doc.date.$date);
                                     if (!isNaN(timestamp)) {
                                         parsableDate = new Date(timestamp).toISOString();
@@ -499,29 +923,21 @@
                                 const newDoc = {
                                     id: doc._id,
                                     ...doc,
-                                    date: parsableDate // 用可解析的 ISO 字符串覆盖 date 字段
+                                    date: parsableDate
                                 };
 
                                 delete newDoc._openid;
-                                delete newDoc._id; // 已经有 id
+                                delete newDoc._id;
                                 allDocuments.push(newDoc);
                             });
 
-                            // [修改] 排序逻辑现在可以安全地 new Date()
-
-
-                            // [新增] 在客户端进行排序 (带安全检查)
                             allDocuments.sort((a, b) => {
                                 const dateA = a.date ? new Date(a.date).getTime() : 0;
                                 const dateB = b.date ? new Date(b.date).getTime() : 0;
-                                // 检查无效日期
-                                if (isNaN(dateA)) dateA = 0;
-                                if (isNaN(dateB)) dateB = 0;
                                 return dateB - dateA;
                             });
 
-                            // 重新渲染
-                            filterDocuments();
+                            filterAndRenderDocuments();
                         },
                         onError: (error) => {
                             console.error("TCB 监听器发生严重错误:", error);
@@ -538,13 +954,11 @@
                 }
                 console.log(`正在删除文档: ${docId}`);
                 try {
-                    // TCB 使用 .doc(id).remove()
                     await documentsCollection.doc(docId).remove();
-                    // watch 会自动处理UI更新
                     console.log("删除成功");
                 } catch (error) {
                     console.error("删除失败: ", error);
-                    alert(`删除失败: ${error.message}`); // 简单提示
+                    alert(`删除失败: ${error.message}`);
                 }
             }
 
@@ -564,19 +978,17 @@
                         title: formData.get('title'),
                         description: formData.get('description'),
                         category: formData.get('category'),
+                        mythTag: formData.get('mythTag'),
                         link: formData.get('link'),
-                        // TCB 推荐使用 db.serverDate() 来获取服务器时间
                         date: db.serverDate()
                     };
 
-                    if (!newDoc.title || !newDoc.description || !newDoc.category || !newDoc.link) {
+                    if (!newDoc.title || !newDoc.description || !newDoc.category || !newDoc.mythTag || !newDoc.link) {
                         throw new Error("请填写所有字段。");
                     }
 
-                    // TCB 使用 .add()
                     await documentsCollection.add(newDoc);
-
-                    closeModal(); // 成功后关闭模态框
+                    closeModal();
                 } catch (error) {
                     console.error("保存失败: ", error);
                     formError.textContent = `保存失败: ${error.message}`;
@@ -588,25 +1000,38 @@
                 }
             }
 
-            // --- 事件监听 (与之前相同) ---
-            searchInput.addEventListener('keyup', filterDocuments);
+            // --- 事件监听 ---
+            if (searchInput) {
+                searchInput.addEventListener('keyup', filterAndRenderDocuments);
+            }
+
+            if (searchIconButton) {
+                searchIconButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (smallSearchBar) {
+                        smallSearchBar.classList.toggle('hidden');
+                        if (!smallSearchBar.classList.contains('hidden') && searchInput) {
+                            setTimeout(() => {
+                                searchInput.focus();
+                            }, 10);
+                        }
+                    }
+                });
+            }
+
+            // 点击页面其他地方时关闭搜索栏
+            document.addEventListener('click', (e) => {
+                if (smallSearchBar &&
+                    !e.target.closest('#smallSearchBar') &&
+                    !e.target.closest('#searchIconButton')) {
+                    smallSearchBar.classList.add('hidden');
+                }
+            });
+
             addDocButton.addEventListener('click', openModal);
             closeModalButton.addEventListener('click', closeModal);
             cancelButton.addEventListener('click', closeModal);
             addDocForm.addEventListener('submit', saveDocument);
-
-            documentList.addEventListener('click', (event) => {
-                const deleteButton = event.target.closest('.delete-button');
-                if (deleteButton) {
-                    event.preventDefault();
-                    const docId = deleteButton.dataset.docId;
-                    const docToDelete = allDocuments.find(d => d.id === docId);
-                    const docTitle = docToDelete ? docToDelete.title : "未知资料";
-                    if (docId) {
-                        openConfirmModal(docId, docTitle);
-                    }
-                }
-            });
 
             closeConfirmModalButton.addEventListener('click', closeConfirmModal);
             cancelDeleteButton.addEventListener('click', closeConfirmModal);
@@ -620,11 +1045,9 @@
             // --- TCB 认证和启动 ---
             async function main() {
                 try {
-                    // 1. 检查当前登录状态
                     const loginState = await auth.getLoginState();
                     if (!loginState) {
                         console.log("用户未登录，尝试匿名登录...");
-                        // 2. 如果未登录，执行匿名登录
                         await auth.signInAnonymously();
                         const newState = await auth.getLoginState();
                         userId = newState.user.uid;
@@ -634,8 +1057,9 @@
                         console.log("TCB 用户已认证:", userId);
                     }
 
-                    // 3. 开始加载文档
                     loadDocuments();
+                    // 初始化首页状态
+                    switchPage('home');
 
                 } catch (error) {
                     console.error("TCB 认证或登录失败:", error);
@@ -643,7 +1067,7 @@
                 }
             }
 
-            main(); // 启动应用
+            main();
 
         }); // End of DOMContentLoaded
     </script>
