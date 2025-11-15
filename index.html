@@ -28,21 +28,18 @@
             }
         }
 
-        /* 首页容器（包含导航栏和图片） */
+        /* 首页容器（包含图片和内容） */
         .home-wrapper {
             position: relative;
             width: 100%;
-            height: 100vh;
             z-index: 0;
         }
 
         /* 首页单张图片样式 */
         .home-image-container {
-            position: absolute;
-            top: 0;
-            left: 0;
+            position: relative;
             width: 100%;
-            height: 100%;
+            height: 100vh;
             z-index: 0;
         }
 
@@ -50,6 +47,14 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        /* 首页内容区域 - 直接接在图片下方 */
+        .content-section.home-content {
+            position: relative;
+            z-index: 10;
+            margin-top: 0;
+            padding-top: 0;
         }
 
         /* 其他页面的背景图片样式 */
@@ -81,27 +86,76 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            transition: background 0.3s ease;
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
-        .transparent-nav:hover {
-            background: rgba(255, 255, 255, 0.15);
+        /* 首页导航栏 - 初始状态（白字透明底） */
+        .transparent-nav.home-nav {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        /* 其他页面的固定导航栏 */
+        /* 首页导航栏 - 滚动后状态（黑字白底） */
+        .transparent-nav.home-nav.scrolled {
+            background: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .transparent-nav.home-nav.scrolled .nav-link {
+            color: rgba(0, 0, 0, 0.8);
+            text-shadow: none;
+        }
+
+        .transparent-nav.home-nav.scrolled .nav-link:hover {
+            color: rgba(0, 0, 0, 1);
+        }
+
+        .transparent-nav.home-nav.scrolled .nav-link.active {
+            color: rgba(0, 0, 0, 1);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.8);
+        }
+
+        .transparent-nav.home-nav.scrolled .text-xl.font-bold.nav-link {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .transparent-nav.home-nav.scrolled .icon-button {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        /* 其他页面的固定导航栏（黑字白底） */
         .transparent-nav.fixed-nav {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             z-index: 1000;
+            background: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
-        /* 首页导航栏（可滚动） */
-        .transparent-nav.scrollable-nav {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .transparent-nav.fixed-nav .nav-link {
+            color: rgba(0, 0, 0, 0.8);
+            text-shadow: none;
+        }
+
+        .transparent-nav.fixed-nav .nav-link:hover {
+            color: rgba(0, 0, 0, 1);
+        }
+
+        .transparent-nav.fixed-nav .nav-link.active {
+            color: rgba(0, 0, 0, 1);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.8);
+        }
+
+        .transparent-nav.fixed-nav .text-xl.font-bold.nav-link {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .transparent-nav.fixed-nav .icon-button {
+            color: rgba(0, 0, 0, 0.8);
         }
 
         .nav-link {
@@ -129,16 +183,16 @@
             min-height: 100vh;
         }
 
-        /* 首页内容区域 */
-        .content-section.home-content {
-            position: relative;
-            z-index: 10;
-        }
 
         /* 其他页面内容区域 */
         .content-section.other-content {
             margin-top: 80px;
             padding-top: 0;
+        }
+
+        /* 其他页面的页面内容，紧贴导航栏 */
+        .content-section.other-content .page {
+            margin-top: 0;
         }
 
         /* 资料卡片交互样式 */
@@ -156,6 +210,11 @@
         /* 图标按钮样式 */
         .icon-button {
             transition: transform 0.2s ease, opacity 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
         }
 
         .icon-button:hover {
@@ -202,21 +261,21 @@
 
 <body class="bg-gray-100 min-h-screen">
 
-    <!-- 首页包装器（包含导航栏和图片） -->
-    <div id="homeWrapper" class="home-wrapper">
-        <!-- 透明导航栏 -->
-        <nav class="transparent-nav scrollable-nav" id="mainNav">
-            <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-                <div class="text-xl font-bold nav-link">中西天地分隔神话资料网站</div>
-                <div class="flex items-center space-x-6 flex-1 justify-center">
+    <!-- 透明导航栏 -->
+    <nav class="transparent-nav home-nav" id="mainNav">
+        <div class="container mx-auto px-6 py-4">
+            <div class="grid grid-cols-3 items-center">
+                <div class="text-xl font-bold nav-link flex-shrink-0 justify-self-start">中西天地分隔神话资料网站</div>
+                <div class="flex items-center justify-center space-x-8 justify-self-center">
                     <a href="#" class="nav-link active" data-page="home">首页</a>
                     <a href="#" class="nav-link" data-page="juedi">绝地天通</a>
                     <a href="#" class="nav-link" data-page="babel">巴别塔</a>
                     <a href="#" class="nav-link" data-page="about">关于</a>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div class="relative">
-                        <button id="searchIconButton" class="icon-button text-white" title="搜索">
+                <div class="flex items-center justify-end space-x-4 flex-shrink-0 justify-self-end">
+                    <div class="relative flex items-center">
+                        <button id="searchIconButton" class="icon-button text-white flex items-center justify-center"
+                            title="搜索">
                             <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -248,10 +307,56 @@
                     </button>
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
+
+    <!-- 首页包装器（包含图片） -->
+    <div id="homeWrapper" class="home-wrapper">
         <!-- 首页单张图片 -->
         <div id="homeImageContainer" class="home-image-container">
             <img src="image/home06.png" alt="Home Image">
+        </div>
+        <!-- 内容区域（直接接在图片下方） -->
+        <div id="contentSection" class="content-section home-content">
+            <!-- 首页内容 -->
+            <div id="homePage" class="page active">
+                <main class="container mx-auto px-6 pt-4 pb-8">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-6">全部资料</h1>
+                    <!-- 资料卡片网格 -->
+                    <div id="documentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- 资料卡片将在这里动态生成 -->
+                    </div>
+
+                    <!-- 加载中/无结果 -->
+                    <div id="noResults" class="hidden text-center text-gray-500 mt-12">
+                        <!-- 初始加载状态 -->
+                        <div id="loadingState">
+                            <svg class="animate-spin mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4">
+                                </circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">正在加载资料...</h3>
+                            <p class="text-sm mt-2">请稍候，正在连接到数据库。</p>
+                        </div>
+                        <!-- 无结果状态 -->
+                        <div id="emptyState" class="hidden">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="1">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
+                            <p class="text-sm mt-2">请尝试更改您的搜索关键词，或添加第一份资料。</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
         </div>
     </div>
 
@@ -260,50 +365,12 @@
         <img src="image/home06.png" alt="Page Background">
     </div>
 
-    <!-- 内容区域 -->
-    <div id="contentSection" class="content-section home-content">
-        <!-- 首页内容 -->
-        <div id="homePage" class="page active">
-            <main class="container mx-auto px-6 py-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-8">全部资料</h1>
-                <!-- 资料卡片网格 -->
-                <div id="documentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- 资料卡片将在这里动态生成 -->
-                </div>
-
-                <!-- 加载中/无结果 -->
-                <div id="noResults" class="hidden text-center text-gray-500 mt-12">
-                    <!-- 初始加载状态 -->
-                    <div id="loadingState">
-                        <svg class="animate-spin mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg"
-                            fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                            </path>
-                        </svg>
-                        <h3 class="mt-2 text-lg font-medium text-gray-900">正在加载资料...</h3>
-                        <p class="text-sm mt-2">请稍候，正在连接到数据库。</p>
-                    </div>
-                    <!-- 无结果状态 -->
-                    <div id="emptyState" class="hidden">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
-                        <p class="text-sm mt-2">请尝试更改您的搜索关键词，或添加第一份资料。</p>
-                    </div>
-                </div>
-            </main>
-        </div>
-
+    <!-- 其他页面内容区域 -->
+    <div id="otherContentSection" class="content-section other-content" style="display: none;">
         <!-- 绝地天通页面 -->
         <div id="juediPage" class="page">
-            <main class="container mx-auto px-6 py-8">
-                <h1 class="text-3xl font-bold text-white mb-8 drop-shadow-lg">绝地天通</h1>
+            <main class="container mx-auto px-6 py-4">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">绝地天通</h1>
                 <div id="juediDocumentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- 资料卡片将在这里动态生成 -->
                 </div>
@@ -315,8 +382,8 @@
 
         <!-- 巴别塔页面 -->
         <div id="babelPage" class="page">
-            <main class="container mx-auto px-6 py-8">
-                <h1 class="text-3xl font-bold text-white mb-8 drop-shadow-lg">巴别塔</h1>
+            <main class="container mx-auto px-6 py-4">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">巴别塔</h1>
                 <div id="babelDocumentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- 资料卡片将在这里动态生成 -->
                 </div>
@@ -328,9 +395,9 @@
 
         <!-- 关于页面 -->
         <div id="aboutPage" class="page">
-            <main class="container mx-auto px-6 py-8">
+            <main class="container mx-auto px-6 py-4">
                 <div class="about-section">
-                    <h1 class="text-4xl font-bold text-white mb-8 text-center drop-shadow-lg">关于</h1>
+                    <h1 class="text-4xl font-bold text-gray-900 mb-6 text-center">关于</h1>
                     <div class="bg-white rounded-lg shadow-lg p-8">
                         <div class="text-center mb-8">
                             <div
@@ -513,6 +580,7 @@
             const searchIconButton = document.getElementById('searchIconButton');
             const mainNav = document.getElementById('mainNav');
             const contentSection = document.getElementById('contentSection');
+            const otherContentSection = document.getElementById('otherContentSection');
             const homeImageContainer = document.getElementById('homeImageContainer');
             const homeWrapper = document.getElementById('homeWrapper');
             const pageBackground = document.getElementById('pageBackground');
@@ -589,32 +657,34 @@
                         // 首页：显示包装器和图片，隐藏背景
                         if (homeWrapper) homeWrapper.style.display = 'block';
                         if (pageBackground) pageBackground.style.display = 'none';
-                        // 导航栏可滚动（绝对定位在包装器内）
+                        if (contentSection) contentSection.style.display = 'block';
+                        if (otherContentSection) otherContentSection.style.display = 'none';
+                        // 导航栏为首页样式（固定，会随滚动变化）
                         mainNav.classList.remove('fixed-nav');
-                        mainNav.classList.add('scrollable-nav');
-                        // 确保导航栏在包装器内
-                        if (homeWrapper && mainNav.parentNode !== homeWrapper) {
-                            homeWrapper.insertBefore(mainNav, homeWrapper.firstChild);
+                        mainNav.classList.add('home-nav');
+                        mainNav.classList.remove('scrolled');
+                        // 确保导航栏在body内（不在包装器内）
+                        if (mainNav.parentNode !== document.body) {
+                            document.body.insertBefore(mainNav, document.body.firstChild);
                         }
-                        // 内容区域在图片下方
-                        contentSection.classList.remove('other-content');
-                        contentSection.classList.add('home-content');
                         // 滚动到顶部
                         window.scrollTo(0, 0);
+                        // 检查初始滚动位置
+                        handleHomeScroll();
                     } else {
                         // 其他页面：隐藏包装器，显示背景
                         if (homeWrapper) homeWrapper.style.display = 'none';
                         if (pageBackground) pageBackground.style.display = 'block';
-                        // 导航栏固定
-                        mainNav.classList.remove('scrollable-nav');
+                        if (contentSection) contentSection.style.display = 'none';
+                        if (otherContentSection) otherContentSection.style.display = 'block';
+                        // 导航栏固定（黑字白底）
+                        mainNav.classList.remove('home-nav');
+                        mainNav.classList.remove('scrolled');
                         mainNav.classList.add('fixed-nav');
                         // 确保导航栏在body内（不在包装器内）
-                        if (mainNav.parentNode === homeWrapper) {
+                        if (mainNav.parentNode !== document.body) {
                             document.body.insertBefore(mainNav, document.body.firstChild);
                         }
-                        // 内容区域在导航栏下方
-                        contentSection.classList.remove('home-content');
-                        contentSection.classList.add('other-content');
                         // 滚动到顶部
                         window.scrollTo(0, 0);
                     }
@@ -632,6 +702,31 @@
                     switchPage(pageName);
                 });
             });
+
+            // --- 首页滚动监听功能 ---
+            function handleHomeScroll() {
+                if (currentPage === 'home') {
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const threshold = 50; // 滚动50px后开始变化
+
+                    if (scrollTop > threshold) {
+                        mainNav.classList.add('scrolled');
+                    } else {
+                        mainNav.classList.remove('scrolled');
+                    }
+                }
+            }
+
+            // 监听滚动事件
+            let scrollTimeout;
+            window.addEventListener('scroll', () => {
+                if (scrollTimeout) {
+                    clearTimeout(scrollTimeout);
+                }
+                scrollTimeout = setTimeout(() => {
+                    handleHomeScroll();
+                }, 10);
+            }, { passive: true });
 
             // --- TCB 初始化 ---
             let c;
