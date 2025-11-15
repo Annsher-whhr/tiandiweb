@@ -35,18 +35,73 @@
             z-index: 0;
         }
 
-        /* 首页单张图片样式 */
+        /* 首页图片轮播样式 */
         .home-image-container {
             position: relative;
             width: 100%;
             height: 100vh;
             z-index: 0;
+            overflow: hidden;
         }
 
-        .home-image-container img {
+        .carousel-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .carousel-track {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .carousel-track.no-transition {
+            transition: none;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .carousel-slide img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        /* 轮播控制按钮 */
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-button:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .carousel-button.prev {
+            left: 20px;
+        }
+
+        .carousel-button.next {
+            right: 20px;
         }
 
         /* 首页内容区域 - 直接接在图片下方 */
@@ -186,8 +241,8 @@
 
         /* 其他页面内容区域 */
         .content-section.other-content {
-            margin-top: 80px;
-            padding-top: 0;
+            margin-top: 0;
+            padding-top: 80px;
         }
 
         /* 其他页面的页面内容，紧贴导航栏 */
@@ -220,6 +275,36 @@
         .icon-button:hover {
             transform: scale(1.1);
             opacity: 0.8;
+        }
+
+        /* 毛玻璃搜索弹窗 */
+        .glass-panel {
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-input {
+            background: transparent;
+            color: #111827;
+        }
+
+        .glass-input::placeholder {
+            color: rgba(17, 24, 39, 0.6);
+        }
+
+        .glass-search-button {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .glass-search-button:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
         }
 
         /* 模态框样式 */
@@ -285,17 +370,18 @@
                         <!-- 小搜索栏（在放大镜下方弹出） -->
                         <div id="smallSearchBar" class="hidden absolute top-full right-0 mt-2 z-50">
                             <div
-                                class="relative bg-white rounded-lg shadow-lg border border-gray-200 p-2 min-w-[300px]">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                class="glass-panel rounded-2xl border border-white/30 p-3 min-w-[320px] flex items-center space-x-3">
+                                <input type="text" id="searchInput"
+                                    class="glass-input flex-1 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    placeholder="搜索标题、简介或分类...">
+                                <button id="searchSubmitButton"
+                                    class="glass-search-button rounded-full p-2 text-gray-700 hover:text-gray-900 focus:outline-none">
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                                         viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                                </div>
-                                <input type="text" id="searchInput"
-                                    class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                    placeholder="搜索标题、简介或分类...">
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -312,9 +398,25 @@
 
     <!-- 首页包装器（包含图片） -->
     <div id="homeWrapper" class="home-wrapper">
-        <!-- 首页单张图片 -->
+        <!-- 首页图片轮播 -->
         <div id="homeImageContainer" class="home-image-container">
-            <img src="image/home06.png" alt="Home Image">
+            <div class="carousel-wrapper">
+                <div class="carousel-track" id="carouselTrack">
+                    <!-- 克隆最后一张图片放在开头 -->
+                    <div class="carousel-slide"><img src="image/home06.png" alt="Image 6 Clone"></div>
+                    <!-- 原始图片 -->
+                    <div class="carousel-slide"><img src="image/home01.png" alt="Image 1"></div>
+                    <div class="carousel-slide"><img src="image/home02.png" alt="Image 2"></div>
+                    <div class="carousel-slide"><img src="image/home03.png" alt="Image 3"></div>
+                    <div class="carousel-slide"><img src="image/home04.png" alt="Image 4"></div>
+                    <div class="carousel-slide"><img src="image/home05.png" alt="Image 5"></div>
+                    <div class="carousel-slide"><img src="image/home06.png" alt="Image 6"></div>
+                    <!-- 克隆第一张图片放在末尾 -->
+                    <div class="carousel-slide"><img src="image/home01.png" alt="Image 1 Clone"></div>
+                </div>
+                <button class="carousel-button prev" id="carouselPrev">&lt;</button>
+                <button class="carousel-button next" id="carouselNext">&gt;</button>
+            </div>
         </div>
         <!-- 内容区域（直接接在图片下方） -->
         <div id="contentSection" class="content-section home-content">
@@ -438,7 +540,7 @@
 
     <!-- 添加资料模态框 (Modal) -->
     <div id="addDocModal"
-        class="modal-overlay fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0">
+        class="modal-overlay fixed inset-0 z-50 bg-gray-900 bg-opacity-50 flex items-start justify-center pt-24 px-4 pb-4 hidden opacity-0">
         <div
             class="modal-content bg-white w-full max-w-lg rounded-lg shadow-xl overflow-hidden transform scale-95 opacity-0">
             <!-- 头部 -->
@@ -578,6 +680,7 @@
             const searchInput = document.getElementById('searchInput');
             const smallSearchBar = document.getElementById('smallSearchBar');
             const searchIconButton = document.getElementById('searchIconButton');
+            const searchSubmitButton = document.getElementById('searchSubmitButton');
             const mainNav = document.getElementById('mainNav');
             const contentSection = document.getElementById('contentSection');
             const otherContentSection = document.getElementById('otherContentSection');
@@ -629,6 +732,104 @@
             let dbWatcher = null; // 数据库监听器
             let currentPage = 'home'; // 当前页面
 
+            // --- 图片轮播功能 ---
+            const carouselTrack = document.getElementById('carouselTrack');
+            const carouselPrev = document.getElementById('carouselPrev');
+            const carouselNext = document.getElementById('carouselNext');
+            const totalSlides = 6; // 实际图片数量
+            let currentSlide = 1; // 从1开始，因为0是克隆的最后一张
+            let autoSlideInterval = null;
+            let isTransitioning = false;
+
+            function updateCarousel(withTransition = true) {
+                if (!withTransition) {
+                    carouselTrack.classList.add('no-transition');
+                }
+                const offset = -currentSlide * 100;
+                carouselTrack.style.transform = `translateX(${offset}%)`;
+
+                if (!withTransition) {
+                    // 强制重绘
+                    carouselTrack.offsetHeight;
+                    carouselTrack.classList.remove('no-transition');
+                }
+            }
+
+            function nextSlide() {
+                if (isTransitioning) return;
+                isTransitioning = true;
+
+                currentSlide++;
+                updateCarousel(true);
+
+                // 如果到达克隆的第一张（索引7），等动画结束后跳回真正的第一张（索引1）
+                if (currentSlide === totalSlides + 1) {
+                    setTimeout(() => {
+                        currentSlide = 1;
+                        updateCarousel(false);
+                        isTransitioning = false;
+                    }, 500); // 等待transition完成
+                } else {
+                    setTimeout(() => {
+                        isTransitioning = false;
+                    }, 500);
+                }
+            }
+
+            function prevSlide() {
+                if (isTransitioning) return;
+                isTransitioning = true;
+
+                currentSlide--;
+                updateCarousel(true);
+
+                // 如果到达克隆的最后一张（索引0），等动画结束后跳到真正的最后一张（索引6）
+                if (currentSlide === 0) {
+                    setTimeout(() => {
+                        currentSlide = totalSlides;
+                        updateCarousel(false);
+                        isTransitioning = false;
+                    }, 500); // 等待transition完成
+                } else {
+                    setTimeout(() => {
+                        isTransitioning = false;
+                    }, 500);
+                }
+            }
+
+            function startAutoSlide() {
+                stopAutoSlide();
+                autoSlideInterval = setInterval(nextSlide, 6000); // 改为6秒
+            }
+
+            function stopAutoSlide() {
+                if (autoSlideInterval) {
+                    clearInterval(autoSlideInterval);
+                    autoSlideInterval = null;
+                }
+            }
+
+            // 轮播按钮事件
+            if (carouselPrev) {
+                carouselPrev.addEventListener('click', () => {
+                    prevSlide();
+                    stopAutoSlide();
+                    startAutoSlide();
+                });
+            }
+
+            if (carouselNext) {
+                carouselNext.addEventListener('click', () => {
+                    nextSlide();
+                    stopAutoSlide();
+                    startAutoSlide();
+                });
+            }
+
+            // 初始化轮播位置并启动自动轮播
+            updateCarousel(false);
+            startAutoSlide();
+
             // --- 页面路由功能 ---
             function switchPage(pageName) {
                 // 隐藏所有页面
@@ -671,6 +872,8 @@
                         window.scrollTo(0, 0);
                         // 检查初始滚动位置
                         handleHomeScroll();
+                        // 启动轮播
+                        startAutoSlide();
                     } else {
                         // 其他页面：隐藏包装器，显示背景
                         if (homeWrapper) homeWrapper.style.display = 'none';
@@ -687,6 +890,8 @@
                         }
                         // 滚动到顶部
                         window.scrollTo(0, 0);
+                        // 停止轮播
+                        stopAutoSlide();
                     }
 
                     // 根据页面过滤资料
@@ -834,11 +1039,19 @@
                     targetElement.classList.add('hidden');
                     if (noResultsElement) {
                         noResultsElement.classList.remove('hidden');
+                        if (noResultsElement === noResults && loadingState && emptyState) {
+                            loadingState.classList.add('hidden');
+                            emptyState.classList.remove('hidden');
+                        }
                     }
                 } else {
                     targetElement.classList.remove('hidden');
                     if (noResultsElement) {
                         noResultsElement.classList.add('hidden');
+                        if (noResultsElement === noResults && loadingState && emptyState) {
+                            loadingState.classList.add('hidden');
+                            emptyState.classList.add('hidden');
+                        }
                     }
                 }
 
@@ -1096,8 +1309,34 @@
             }
 
             // --- 事件监听 ---
+            function performSearch() {
+                filterAndRenderDocuments();
+                if (smallSearchBar && !smallSearchBar.classList.contains('hidden')) {
+                    smallSearchBar.classList.add('hidden');
+                }
+                if (searchInput) {
+                    searchInput.blur();
+                }
+            }
+
             if (searchInput) {
-                searchInput.addEventListener('keyup', filterAndRenderDocuments);
+                searchInput.addEventListener('input', () => {
+                    filterAndRenderDocuments();
+                });
+
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        performSearch();
+                    }
+                });
+            }
+
+            if (searchSubmitButton) {
+                searchSubmitButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    performSearch();
+                });
             }
 
             if (searchIconButton) {
