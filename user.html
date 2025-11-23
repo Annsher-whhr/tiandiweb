@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中西天地分隔神话资料网站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入腾讯云 CloudBase SDK -->
+    <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.21.6/cloudbase.full.js?v=1"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        @supports ((-webkit-line-clamp: 3) or (line-clamp: 3)) {
+            .line-clamp-3 {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                line-clamp: 3;
+                -webkit-box-orient: vertical;
+            }
+        }
+
+        /* 首页容器（包含图片和内容） */
+        .home-wrapper {
+            position: relative;
+            width: 100%;
+            z-index: 0;
+        }
+
+        /* 首页图片轮播样式 */
+        .home-image-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .carousel-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .carousel-track {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .carousel-track.no-transition {
+            transition: none;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 轮播控制按钮 */
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-button:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .carousel-button.prev {
+            left: 20px;
+        }
+
+        .carousel-button.next {
+            right: 20px;
+        }
+
+        /* 首页内容区域 - 直接接在图片下方 */
+        .content-section.home-content {
+            position: relative;
+            z-index: 10;
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        /* 其他页面的背景图片样式 */
+        .page-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .page-background img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.4);
+        }
+
+        /* 透明导航栏样式 */
+        .transparent-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* 首页导航栏 - 初始状态（白字透明底） */
+        .transparent-nav.home-nav {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 首页导航栏 - 滚动后状态（黑字白底） */
+        .transparent-nav.home-nav.scrolled {
+            background: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .transparent-nav.home-nav.scrolled .nav-link {
+            color: rgba(0, 0, 0, 0.8);
+            text-shadow: none;
+        }
+
+        .transparent-nav.home-nav.scrolled .nav-link:hover {
+            color: rgba(0, 0, 0, 1);
+        }
+
+        .transparent-nav.home-nav.scrolled .nav-link.active {
+            color: rgba(0, 0, 0, 1);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.8);
+        }
+
+        .transparent-nav.home-nav.scrolled .text-xl.font-bold.nav-link {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .transparent-nav.home-nav.scrolled .icon-button {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        /* 其他页面的固定导航栏（黑字白底） */
+        .transparent-nav.fixed-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .transparent-nav.fixed-nav .nav-link {
+            color: rgba(0, 0, 0, 0.8);
+            text-shadow: none;
+        }
+
+        .transparent-nav.fixed-nav .nav-link:hover {
+            color: rgba(0, 0, 0, 1);
+        }
+
+        .transparent-nav.fixed-nav .nav-link.active {
+            color: rgba(0, 0, 0, 1);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.8);
+        }
+
+        .transparent-nav.fixed-nav .text-xl.font-bold.nav-link {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .transparent-nav.fixed-nav .icon-button {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            color: white;
+            font-weight: 600;
+            border-bottom: 2px solid white;
+        }
+
+        .nav-actions {
+            margin-right: -55px;
+        }
+
+        .site-title {
+            margin-left: -55px;
+        }
+
+        .nav-item {
+            position: relative;
+            padding: 0 12px;
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 100%;
+            width: 100%;
+            height: 22px;
+            background: transparent;
+            pointer-events: auto;
+        }
+
+        .sub-nav {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 12px 18px;
+            border-radius: 999px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            display: none;
+            gap: 20px;
+            white-space: nowrap;
+            z-index: 1001;
+        }
+
+        .sub-nav::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 10px 10px 10px;
+            border-style: solid;
+            border-color: transparent transparent rgba(255, 255, 255, 0.75) transparent;
+        }
+
+        .nav-item.show-sub-nav .sub-nav {
+            display: flex;
+        }
+
+        .sub-nav-link {
+            background: transparent;
+            border: none;
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .sub-nav-link:hover,
+        .sub-nav-link:focus {
+            opacity: 0.7;
+            transform: translateY(-1px);
+        }
+
+        .category-section {
+            scroll-margin-top: 140px;
+        }
+
+        .category-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .category-empty {
+            color: #6b7280;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }
+
+        /* 内容区域样式 */
+        .content-section {
+            position: relative;
+            z-index: 10;
+            background: white;
+            min-height: 100vh;
+        }
+
+
+        /* 其他页面内容区域 */
+        .content-section.other-content {
+            margin-top: 0;
+            padding-top: 80px;
+        }
+
+        /* 其他页面的页面内容，紧贴导航栏 */
+        .content-section.other-content .page {
+            margin-top: 0;
+        }
+
+        /* 资料卡片交互样式 */
+        .document-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .document-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 图标按钮样式 */
+        .icon-button {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .icon-button:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        /* 毛玻璃搜索弹窗 */
+        .glass-panel {
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-input {
+            background: transparent;
+            color: #111827;
+        }
+
+        .glass-input::placeholder {
+            color: rgba(17, 24, 39, 0.6);
+        }
+
+        .glass-search-button {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .glass-search-button:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+        }
+
+        /* 模态框样式 */
+        .modal-overlay {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .modal-content {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        /* 页面切换动画 */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 关于页面样式 */
+        .about-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- 透明导航栏 -->
+    <nav class="transparent-nav home-nav" id="mainNav">
+        <div class="container mx-auto px-6 py-4">
+            <div class="grid grid-cols-3 items-center">
+                <div class="text-xl font-bold nav-link flex-shrink-0 justify-self-start site-title">中西天地分隔神话资料网站</div>
+                <div class="flex items-center justify-center space-x-8 justify-self-center">
+                    <div class="nav-item group" data-nav-page="home">
+                        <a href="#" class="nav-link active" data-page="home">首页</a>
+                        <div class="sub-nav">
+                            <button class="sub-nav-link" data-target-page="home"
+                                data-category-anchor="academic">学术论文</button>
+                            <button class="sub-nav-link" data-target-page="home"
+                                data-category-anchor="translation">翻译资料</button>
+                            <button class="sub-nav-link" data-target-page="home"
+                                data-category-anchor="industry">行业报告</button>
+                            <button class="sub-nav-link" data-target-page="home"
+                                data-category-anchor="internal">内部文档</button>
+                        </div>
+                    </div>
+                    <div class="nav-item group" data-nav-page="juedi">
+                        <a href="#" class="nav-link" data-page="juedi">绝地天通</a>
+                        <div class="sub-nav">
+                            <button class="sub-nav-link" data-target-page="juedi"
+                                data-category-anchor="academic">学术论文</button>
+                            <button class="sub-nav-link" data-target-page="juedi"
+                                data-category-anchor="translation">翻译资料</button>
+                            <button class="sub-nav-link" data-target-page="juedi"
+                                data-category-anchor="industry">行业报告</button>
+                            <button class="sub-nav-link" data-target-page="juedi"
+                                data-category-anchor="internal">内部文档</button>
+                        </div>
+                    </div>
+                    <div class="nav-item group" data-nav-page="babel">
+                        <a href="#" class="nav-link" data-page="babel">巴别塔</a>
+                        <div class="sub-nav">
+                            <button class="sub-nav-link" data-target-page="babel"
+                                data-category-anchor="academic">学术论文</button>
+                            <button class="sub-nav-link" data-target-page="babel"
+                                data-category-anchor="translation">翻译资料</button>
+                            <button class="sub-nav-link" data-target-page="babel"
+                                data-category-anchor="industry">行业报告</button>
+                            <button class="sub-nav-link" data-target-page="babel"
+                                data-category-anchor="internal">内部文档</button>
+                        </div>
+                    </div>
+                    <a href="#" class="nav-link" data-page="about">关于</a>
+                </div>
+                <!-- 用户版本：有搜索，无添加按钮 -->
+                <div class="flex items-center justify-end space-x-4 flex-shrink-0 justify-self-end nav-actions">
+                    <div class="relative flex items-center">
+                        <button id="searchIconButton" class="icon-button text-white flex items-center justify-center"
+                            title="搜索">
+                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                        <!-- 小搜索栏（在放大镜下方弹出） -->
+                        <div id="smallSearchBar" class="hidden absolute top-full right-0 mt-2 z-50">
+                            <div
+                                class="glass-panel rounded-2xl border border-white/30 p-3 min-w-[320px] flex items-center space-x-3">
+                                <input type="text" id="searchInput"
+                                    class="glass-input flex-1 px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    placeholder="搜索标题、简介或分类...">
+                                <button id="searchSubmitButton"
+                                    class="glass-search-button rounded-full p-2 text-gray-700 hover:text-gray-900 focus:outline-none">
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 首页包装器（包含图片） -->
+    <div id="homeWrapper" class="home-wrapper">
+        <!-- 首页图片轮播 -->
+        <div id="homeImageContainer" class="home-image-container">
+            <div class="carousel-wrapper">
+                <div class="carousel-track" id="carouselTrack">
+                    <!-- 克隆最后一张图片放在开头 -->
+                    <div class="carousel-slide"><img src="image/home06.png" alt="Image 6 Clone"></div>
+                    <!-- 原始图片 -->
+                    <div class="carousel-slide"><img src="image/home01.png" alt="Image 1"></div>
+                    <div class="carousel-slide"><img src="image/home02.png" alt="Image 2"></div>
+                    <div class="carousel-slide"><img src="image/home03.png" alt="Image 3"></div>
+                    <div class="carousel-slide"><img src="image/home04.png" alt="Image 4"></div>
+                    <div class="carousel-slide"><img src="image/home05.png" alt="Image 5"></div>
+                    <div class="carousel-slide"><img src="image/home06.png" alt="Image 6"></div>
+                    <!-- 克隆第一张图片放在末尾 -->
+                    <div class="carousel-slide"><img src="image/home01.png" alt="Image 1 Clone"></div>
+                </div>
+                <button class="carousel-button prev" id="carouselPrev">&lt;</button>
+                <button class="carousel-button next" id="carouselNext">&gt;</button>
+            </div>
+        </div>
+        <!-- 内容区域（直接接在图片下方） -->
+        <div id="contentSection" class="content-section home-content">
+            <!-- 首页内容 -->
+            <div id="homePage" class="page active">
+                <main class="container mx-auto px-6 pt-4 pb-8">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-6">全部资料</h1>
+                    <div id="homeCategories" class="space-y-12">
+                        <section class="category-section" id="home-category-academic">
+                            <h2 class="category-title">学术论文</h2>
+                            <div id="homeCategoryAcademicList"
+                                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                            <p id="homeCategoryAcademicEmpty" class="category-empty hidden">暂无学术论文资料</p>
+                        </section>
+                        <section class="category-section" id="home-category-translation">
+                            <h2 class="category-title">翻译资料</h2>
+                            <div id="homeCategoryTranslationList"
+                                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                            <p id="homeCategoryTranslationEmpty" class="category-empty hidden">暂无翻译资料</p>
+                        </section>
+                        <section class="category-section" id="home-category-industry">
+                            <h2 class="category-title">行业报告</h2>
+                            <div id="homeCategoryIndustryList"
+                                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                            <p id="homeCategoryIndustryEmpty" class="category-empty hidden">暂无行业报告</p>
+                        </section>
+                        <section class="category-section" id="home-category-internal">
+                            <h2 class="category-title">内部文档</h2>
+                            <div id="homeCategoryInternalList"
+                                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                            <p id="homeCategoryInternalEmpty" class="category-empty hidden">暂无内部文档</p>
+                        </section>
+                    </div>
+
+                    <!-- 加载中/无结果 -->
+                    <div id="noResults" class="hidden text-center text-gray-500 mt-12">
+                        <!-- 初始加载状态 -->
+                        <div id="loadingState">
+                            <svg class="animate-spin mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4">
+                                </circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">正在加载资料...</h3>
+                            <p class="text-sm mt-2">请稍候，正在连接到数据库。</p>
+                        </div>
+                        <!-- 无结果状态 -->
+                        <div id="emptyState" class="hidden">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="1">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">未找到资料</h3>
+                            <p class="text-sm mt-2">请尝试更改您的搜索关键词，或添加第一份资料。</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 其他页面背景图片 -->
+    <div id="pageBackground" class="page-background" style="display: none;">
+        <img src="image/home06.png" alt="Page Background">
+    </div>
+
+    <!-- 其他页面内容区域 -->
+    <div id="otherContentSection" class="content-section other-content" style="display: none;">
+        <!-- 绝地天通页面 -->
+        <div id="juediPage" class="page">
+            <main class="container mx-auto px-6 py-4">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">绝地天通</h1>
+                <div id="juediCategories" class="space-y-12">
+                    <section class="category-section" id="juedi-category-academic">
+                        <h2 class="category-title">学术论文</h2>
+                        <div id="juediCategoryAcademicList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="juediCategoryAcademicEmpty" class="category-empty hidden">暂无学术论文资料</p>
+                    </section>
+                    <section class="category-section" id="juedi-category-translation">
+                        <h2 class="category-title">翻译资料</h2>
+                        <div id="juediCategoryTranslationList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="juediCategoryTranslationEmpty" class="category-empty hidden">暂无翻译资料</p>
+                    </section>
+                    <section class="category-section" id="juedi-category-industry">
+                        <h2 class="category-title">行业报告</h2>
+                        <div id="juediCategoryIndustryList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="juediCategoryIndustryEmpty" class="category-empty hidden">暂无行业报告</p>
+                    </section>
+                    <section class="category-section" id="juedi-category-internal">
+                        <h2 class="category-title">内部文档</h2>
+                        <div id="juediCategoryInternalList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="juediCategoryInternalEmpty" class="category-empty hidden">暂无内部文档</p>
+                    </section>
+                </div>
+                <div id="juediNoResults" class="hidden text-center text-gray-500 mt-10">
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">暂无绝地天通相关资料</h3>
+                </div>
+            </main>
+        </div>
+
+        <!-- 巴别塔页面 -->
+        <div id="babelPage" class="page">
+            <main class="container mx-auto px-6 py-4">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">巴别塔</h1>
+                <div id="babelCategories" class="space-y-12">
+                    <section class="category-section" id="babel-category-academic">
+                        <h2 class="category-title">学术论文</h2>
+                        <div id="babelCategoryAcademicList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="babelCategoryAcademicEmpty" class="category-empty hidden">暂无学术论文资料</p>
+                    </section>
+                    <section class="category-section" id="babel-category-translation">
+                        <h2 class="category-title">翻译资料</h2>
+                        <div id="babelCategoryTranslationList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="babelCategoryTranslationEmpty" class="category-empty hidden">暂无翻译资料</p>
+                    </section>
+                    <section class="category-section" id="babel-category-industry">
+                        <h2 class="category-title">行业报告</h2>
+                        <div id="babelCategoryIndustryList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="babelCategoryIndustryEmpty" class="category-empty hidden">暂无行业报告</p>
+                    </section>
+                    <section class="category-section" id="babel-category-internal">
+                        <h2 class="category-title">内部文档</h2>
+                        <div id="babelCategoryInternalList"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        <p id="babelCategoryInternalEmpty" class="category-empty hidden">暂无内部文档</p>
+                    </section>
+                </div>
+                <div id="babelNoResults" class="hidden text-center text-gray-500 mt-10">
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">暂无巴别塔相关资料</h3>
+                </div>
+            </main>
+        </div>
+
+        <!-- 关于页面 -->
+        <div id="aboutPage" class="page">
+            <main class="container mx-auto px-6 py-4">
+                <div class="about-section">
+                    <h1 class="text-4xl font-bold text-gray-900 mb-6 text-center">关于</h1>
+                    <div class="bg-white rounded-lg shadow-lg p-8">
+                        <div class="text-center mb-8">
+                            <div
+                                class="w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mx-auto mb-6 flex items-center justify-center">
+                                <span class="text-4xl text-white font-bold">资</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">网站资料整理者</h2>
+                            <p class="text-gray-600">致力于中西天地分隔神话研究的资料收集与整理</p>
+                        </div>
+                        <div class="space-y-6 text-gray-700">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-3">研究背景</h3>
+                                <p class="leading-relaxed">
+                                    本网站致力于收集和整理与"绝地天通"和"巴别塔"相关的神话资料，探索中西文化中关于天地分隔的古老传说。
+                                    这些神话故事反映了不同文明对宇宙秩序、人类与神明关系的深刻思考。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-3">资料范围</h3>
+                                <p class="leading-relaxed">
+                                    本网站收录了包括学术论文、翻译资料、研究报告等多种类型的文献，涵盖了中国古代"绝地天通"神话
+                                    和西方"巴别塔"传说的相关研究资料，为研究者提供全面的参考资料。
+                                </p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-3">联系方式</h3>
+                                <p class="leading-relaxed">
+                                    如果您有相关的资料想要分享，或对网站有任何建议，欢迎通过网站功能添加新资料。
+                                    我们致力于构建一个开放、共享的研究资料平台。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 用户版本：无需模态框 -->
+
+    <script type="module">
+        // Wait for the DOM to be fully loaded before querying elements
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 腾讯云 TCB 配置 ---
+            const TCB_ENV_ID = 'cloud1-9gfk1fl37e4b5266';
+
+            // --- DOM 元素 ---
+            const searchInput = document.getElementById('searchInput');
+            const smallSearchBar = document.getElementById('smallSearchBar');
+            const searchIconButton = document.getElementById('searchIconButton');
+            const searchSubmitButton = document.getElementById('searchSubmitButton');
+            const mainNav = document.getElementById('mainNav');
+            const contentSection = document.getElementById('contentSection');
+            const otherContentSection = document.getElementById('otherContentSection');
+            const homeImageContainer = document.getElementById('homeImageContainer');
+            const homeWrapper = document.getElementById('homeWrapper');
+            const pageBackground = document.getElementById('pageBackground');
+            const homeCategoriesWrapper = document.getElementById('homeCategories');
+            const homeCategoryConfig = {
+                academic: {
+                    list: document.getElementById('homeCategoryAcademicList'),
+                    empty: document.getElementById('homeCategoryAcademicEmpty')
+                },
+                translation: {
+                    list: document.getElementById('homeCategoryTranslationList'),
+                    empty: document.getElementById('homeCategoryTranslationEmpty')
+                },
+                industry: {
+                    list: document.getElementById('homeCategoryIndustryList'),
+                    empty: document.getElementById('homeCategoryIndustryEmpty')
+                },
+                internal: {
+                    list: document.getElementById('homeCategoryInternalList'),
+                    empty: document.getElementById('homeCategoryInternalEmpty')
+                }
+            };
+            const juediCategoriesWrapper = document.getElementById('juediCategories');
+            const juediCategoryConfig = {
+                academic: {
+                    list: document.getElementById('juediCategoryAcademicList'),
+                    empty: document.getElementById('juediCategoryAcademicEmpty')
+                },
+                translation: {
+                    list: document.getElementById('juediCategoryTranslationList'),
+                    empty: document.getElementById('juediCategoryTranslationEmpty')
+                },
+                industry: {
+                    list: document.getElementById('juediCategoryIndustryList'),
+                    empty: document.getElementById('juediCategoryIndustryEmpty')
+                },
+                internal: {
+                    list: document.getElementById('juediCategoryInternalList'),
+                    empty: document.getElementById('juediCategoryInternalEmpty')
+                }
+            };
+            const babelCategoriesWrapper = document.getElementById('babelCategories');
+            const babelCategoryConfig = {
+                academic: {
+                    list: document.getElementById('babelCategoryAcademicList'),
+                    empty: document.getElementById('babelCategoryAcademicEmpty')
+                },
+                translation: {
+                    list: document.getElementById('babelCategoryTranslationList'),
+                    empty: document.getElementById('babelCategoryTranslationEmpty')
+                },
+                industry: {
+                    list: document.getElementById('babelCategoryIndustryList'),
+                    empty: document.getElementById('babelCategoryIndustryEmpty')
+                },
+                internal: {
+                    list: document.getElementById('babelCategoryInternalList'),
+                    empty: document.getElementById('babelCategoryInternalEmpty')
+                }
+            };
+            const CATEGORY_LABELS = {
+                academic: "学术论文",
+                translation: "翻译资料",
+                industry: "行业报告",
+                internal: "内部文档"
+            };
+            const pageCategoryConfigs = {
+                home: homeCategoryConfig,
+                juedi: juediCategoryConfig,
+                babel: babelCategoryConfig
+            };
+            const noResults = document.getElementById('noResults');
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const juediNoResults = document.getElementById('juediNoResults');
+            const babelNoResults = document.getElementById('babelNoResults');
+            const pageWrappers = {
+                home: homeCategoriesWrapper,
+                juedi: juediCategoriesWrapper,
+                babel: babelCategoriesWrapper
+            };
+            const pageNoResultElements = {
+                home: noResults,
+                juedi: juediNoResults,
+                babel: babelNoResults
+            };
+
+            // 用户版本：无需模态框 DOM
+
+            // 页面导航元素
+            const navLinks = document.querySelectorAll('.nav-link[data-page]');
+            const navItems = document.querySelectorAll('.nav-item');
+            const subNavLinks = document.querySelectorAll('.sub-nav-link');
+            const pages = {
+                home: document.getElementById('homePage'),
+                juedi: document.getElementById('juediPage'),
+                babel: document.getElementById('babelPage'),
+                about: document.getElementById('aboutPage')
+            };
+
+            // --- App State ---
+            let userId, db, documentsCollection;
+            let allDocuments = []; // 用于搜索的本地缓存
+            let docIdToDelete = null; // 存储待删除的文档ID
+            let dbWatcher = null; // 数据库监听器
+            let currentPage = 'home'; // 当前页面
+
+            // --- 图片轮播功能 ---
+            const carouselTrack = document.getElementById('carouselTrack');
+            const carouselPrev = document.getElementById('carouselPrev');
+            const carouselNext = document.getElementById('carouselNext');
+            const totalSlides = 6; // 实际图片数量
+            let currentSlide = 1; // 从1开始，因为0是克隆的最后一张
+            let autoSlideInterval = null;
+            let isTransitioning = false;
+
+            function updateCarousel(withTransition = true) {
+                if (!withTransition) {
+                    carouselTrack.classList.add('no-transition');
+                }
+                const offset = -currentSlide * 100;
+                carouselTrack.style.transform = `translateX(${offset}%)`;
+
+                if (!withTransition) {
+                    // 强制重绘
+                    carouselTrack.offsetHeight;
+                    carouselTrack.classList.remove('no-transition');
+                }
+            }
+
+            function nextSlide() {
+                if (isTransitioning) return;
+                isTransitioning = true;
+
+                currentSlide++;
+                updateCarousel(true);
+
+                // 如果到达克隆的第一张（索引7），等动画结束后跳回真正的第一张（索引1）
+                if (currentSlide === totalSlides + 1) {
+                    setTimeout(() => {
+                        currentSlide = 1;
+                        updateCarousel(false);
+                        isTransitioning = false;
+                    }, 500); // 等待transition完成
+                } else {
+                    setTimeout(() => {
+                        isTransitioning = false;
+                    }, 500);
+                }
+            }
+
+            function prevSlide() {
+                if (isTransitioning) return;
+                isTransitioning = true;
+
+                currentSlide--;
+                updateCarousel(true);
+
+                // 如果到达克隆的最后一张（索引0），等动画结束后跳到真正的最后一张（索引6）
+                if (currentSlide === 0) {
+                    setTimeout(() => {
+                        currentSlide = totalSlides;
+                        updateCarousel(false);
+                        isTransitioning = false;
+                    }, 500); // 等待transition完成
+                } else {
+                    setTimeout(() => {
+                        isTransitioning = false;
+                    }, 500);
+                }
+            }
+
+            function startAutoSlide() {
+                stopAutoSlide();
+                autoSlideInterval = setInterval(nextSlide, 6000); // 改为6秒
+            }
+
+            function stopAutoSlide() {
+                if (autoSlideInterval) {
+                    clearInterval(autoSlideInterval);
+                    autoSlideInterval = null;
+                }
+            }
+
+            // 轮播按钮事件
+            if (carouselPrev) {
+                carouselPrev.addEventListener('click', () => {
+                    prevSlide();
+                    stopAutoSlide();
+                    startAutoSlide();
+                });
+            }
+
+            if (carouselNext) {
+                carouselNext.addEventListener('click', () => {
+                    nextSlide();
+                    stopAutoSlide();
+                    startAutoSlide();
+                });
+            }
+
+            // 初始化轮播位置并启动自动轮播
+            updateCarousel(false);
+            startAutoSlide();
+
+            // --- 页面路由功能 ---
+            function switchPage(pageName) {
+                // 隐藏所有页面
+                Object.values(pages).forEach(page => {
+                    page.classList.remove('active');
+                });
+
+                // 移除所有导航链接的active状态
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+
+                // 显示目标页面
+                if (pages[pageName]) {
+                    pages[pageName].classList.add('active');
+                    currentPage = pageName;
+
+                    // 激活对应的导航链接
+                    const activeLink = document.querySelector(`.nav-link[data-page="${pageName}"]`);
+                    if (activeLink) {
+                        activeLink.classList.add('active');
+                    }
+
+                    // 控制首页图片和其他页面背景
+                    if (pageName === 'home') {
+                        // 首页：显示包装器和图片，隐藏背景
+                        if (homeWrapper) homeWrapper.style.display = 'block';
+                        if (pageBackground) pageBackground.style.display = 'none';
+                        if (contentSection) contentSection.style.display = 'block';
+                        if (otherContentSection) otherContentSection.style.display = 'none';
+                        // 导航栏为首页样式（固定，会随滚动变化）
+                        mainNav.classList.remove('fixed-nav');
+                        mainNav.classList.add('home-nav');
+                        mainNav.classList.remove('scrolled');
+                        // 确保导航栏在body内（不在包装器内）
+                        if (mainNav.parentNode !== document.body) {
+                            document.body.insertBefore(mainNav, document.body.firstChild);
+                        }
+                        // 滚动到顶部
+                        window.scrollTo(0, 0);
+                        // 检查初始滚动位置
+                        handleHomeScroll();
+                        // 启动轮播
+                        startAutoSlide();
+                    } else {
+                        // 其他页面：隐藏包装器，显示背景
+                        if (homeWrapper) homeWrapper.style.display = 'none';
+                        if (pageBackground) pageBackground.style.display = 'block';
+                        if (contentSection) contentSection.style.display = 'none';
+                        if (otherContentSection) otherContentSection.style.display = 'block';
+                        // 导航栏固定（黑字白底）
+                        mainNav.classList.remove('home-nav');
+                        mainNav.classList.remove('scrolled');
+                        mainNav.classList.add('fixed-nav');
+                        // 确保导航栏在body内（不在包装器内）
+                        if (mainNav.parentNode !== document.body) {
+                            document.body.insertBefore(mainNav, document.body.firstChild);
+                        }
+                        // 滚动到顶部
+                        window.scrollTo(0, 0);
+                        // 停止轮播
+                        stopAutoSlide();
+                    }
+
+                    // 根据页面过滤资料
+                    filterAndRenderDocuments();
+                }
+            }
+
+            // 导航链接点击事件
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageName = link.getAttribute('data-page');
+                    switchPage(pageName);
+                });
+            });
+
+            // --- 首页滚动监听功能 ---
+            function handleHomeScroll() {
+                if (currentPage === 'home') {
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const threshold = 50; // 滚动50px后开始变化
+
+                    if (scrollTop > threshold) {
+                        mainNav.classList.add('scrolled');
+                    } else {
+                        mainNav.classList.remove('scrolled');
+                    }
+                }
+            }
+
+            // 监听滚动事件
+            let scrollTimeout;
+            window.addEventListener('scroll', () => {
+                if (scrollTimeout) {
+                    clearTimeout(scrollTimeout);
+                }
+                scrollTimeout = setTimeout(() => {
+                    handleHomeScroll();
+                }, 10);
+            }, { passive: true });
+
+            // --- TCB 初始化 ---
+            let c;
+            try {
+                if (typeof cloudbase === 'undefined') {
+                    throw new Error("TCB SDK 加载失败 (cloudbase is not defined)。请检查网络连接或浏览器插件。");
+                }
+
+                if (TCB_ENV_ID === 'YOUR_ENV_ID') {
+                    throw new Error("请在 index.html 文件中配置您的 TCB_ENV_ID");
+                }
+
+                c = cloudbase.init({
+                    env: TCB_ENV_ID
+                });
+                console.log("TCB SDK 初始化成功");
+            } catch (e) {
+                console.error("TCB 初始化失败:", e);
+                showError(e.message);
+                return;
+            }
+
+            const auth = c.auth();
+            db = c.database();
+            const COLLECTION_NAME = "documents";
+            documentsCollection = db.collection(COLLECTION_NAME);
+
+            // --- 错误处理 ---
+            function showError(message) {
+                Object.values(pageWrappers).forEach(wrapper => {
+                    if (wrapper) wrapper.classList.add('hidden');
+                });
+                if (noResults) {
+                    noResults.classList.remove('hidden');
+                }
+                if (loadingState) loadingState.classList.add('hidden');
+                if (emptyState) {
+                    emptyState.classList.remove('hidden');
+                    emptyState.innerHTML = `<h3 class="mt-2 text-lg font-medium text-red-700">加载失败</h3><p class="text-sm mt-2">${message}</p><p class="text-xs mt-2 text-gray-500">请检查您的 TCB_ENV_ID 配置和网络连接。</p>`;
+                }
+            }
+
+            // --- 用户版本：无需模态框控制函数 ---
+
+            // --- 辅助函数：获取分类颜色 ---
+            function getCategoryClass(category) {
+                switch (category) {
+                    case "学术论文": return "bg-blue-100 text-blue-800";
+                    case "翻译资料": return "bg-green-100 text-green-800";
+                    case "行业报告": return "bg-purple-100 text-purple-800";
+                    case "内部文档": return "bg-yellow-100 text-yellow-800";
+                    default: return "bg-gray-100 text-gray-800";
+                }
+            }
+
+            // --- 辅助函数：获取神话标签颜色 ---
+            function getMythTagClass(mythTag) {
+                switch (mythTag) {
+                    case "绝地天通": return "bg-orange-100 text-orange-800";
+                    case "巴别塔": return "bg-indigo-100 text-indigo-800";
+                    default: return "bg-gray-100 text-gray-800";
+                }
+            }
+
+            function getCategoryKeyFromLabel(label) {
+                switch (label) {
+                    case '学术论文': return 'academic';
+                    case '翻译资料': return 'translation';
+                    case '行业报告': return 'industry';
+                    case '内部文档': return 'internal';
+                    default: return null;
+                }
+            }
+
+            function createDocumentCard(doc) {
+                const categoryClasses = getCategoryClass(doc.category);
+                const mythTagClasses = doc.mythTag ? getMythTagClass(doc.mythTag) : '';
+                let displayDate = '无日期';
+
+                try {
+                    if (doc.date) {
+                        const dateObj = new Date(doc.date);
+                        if (!isNaN(dateObj.getTime())) {
+                            displayDate = dateObj.toISOString().split('T')[0];
+                        }
+                    }
+                } catch (e) {
+                    console.warn("日期解析失败:", doc.date);
+                }
+
+                return `
+                    <div class="document-card bg-white rounded-lg shadow-lg overflow-hidden flex flex-col" data-doc-id="${doc.id}" data-doc-link="${doc.link}">
+                        <div class="p-6 flex-grow">
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <span class="${categoryClasses} text-xs font-semibold px-2.5 py-0.5 rounded-full">${doc.category}</span>
+                                ${doc.mythTag ? `<span class="${mythTagClasses} text-xs font-semibold px-2.5 py-0.5 rounded-full">${doc.mythTag}</span>` : ''}
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mt-3 mb-2">${doc.title}</h3>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-3" title="${doc.description}">
+                                ${doc.description}
+                            </p>
+                        </div>
+                        <div class="bg-gray-50 px-6 py-4 flex justify-between items-center">
+                            <span class="text-gray-500 text-sm">${displayDate}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --- 用户版本：无需删除菜单相关函数 ---
+
+            function attachCardInteractions(container) {
+                if (!container) return;
+
+                container.querySelectorAll('.document-card').forEach(card => {
+                    const link = card.getAttribute('data-doc-link');
+                    card.addEventListener('click', (e) => {
+                        window.open(link, '_blank');
+                    });
+                });
+            }
+
+            function renderDocumentsByCategory(documents, pageName) {
+                const config = pageCategoryConfigs[pageName];
+                if (!config) return 0;
+
+                let totalRendered = 0;
+
+                Object.entries(config).forEach(([key, section]) => {
+                    if (!section || !section.list || !section.empty) return;
+                    const sectionDocs = documents.filter(doc => getCategoryKeyFromLabel(doc.category) === key);
+                    if (sectionDocs.length === 0) {
+                        section.list.innerHTML = '';
+                        section.empty.classList.remove('hidden');
+                    } else {
+                        section.list.innerHTML = sectionDocs.map(createDocumentCard).join('');
+                        section.empty.classList.add('hidden');
+                        attachCardInteractions(section.list);
+                        totalRendered += sectionDocs.length;
+                    }
+                });
+
+                return totalRendered;
+            }
+
+            function scrollToCategory(pageName, categoryKey) {
+                const sectionId = `${pageName}-category-${categoryKey}`;
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            function hideAllSubNavs() {
+                navItems.forEach(item => item.classList.remove('show-sub-nav'));
+            }
+
+            // Sub-nav click handlers
+            subNavLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const targetPage = link.getAttribute('data-target-page');
+                    const categoryAnchor = link.getAttribute('data-category-anchor');
+
+                    // Switch page if needed
+                    if (targetPage && targetPage !== currentPage) {
+                        switchPage(targetPage);
+                    }
+
+                    // Scroll to category after a brief delay to ensure page is switched
+                    setTimeout(() => {
+                        if (categoryAnchor) {
+                            scrollToCategory(targetPage, categoryAnchor);
+                        }
+                    }, 100);
+
+                    // Hide sub-nav
+                    hideAllSubNavs();
+                });
+            });
+
+            // Hide sub-nav when clicking outside or on main nav links
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.nav-item')) {
+                    hideAllSubNavs();
+                }
+            });
+
+            // Hide sub-nav when main nav link is clicked
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    hideAllSubNavs();
+                });
+            });
+
+            // Show/hide sub-nav on hover/focus
+            navItems.forEach(item => {
+                const show = () => {
+                    navItems.forEach(i => i.classList.remove('show-sub-nav'));
+                    item.classList.add('show-sub-nav');
+                };
+                const hide = () => {
+                    item.classList.remove('show-sub-nav');
+                };
+
+                item.addEventListener('mouseenter', show);
+                item.addEventListener('mouseleave', hide);
+                item.addEventListener('focusin', show);
+                item.addEventListener('focusout', hide);
+            });
+
+            // --- 核心功能：过滤和渲染文档 ---
+            function filterAndRenderDocuments() {
+                const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                let filtered = allDocuments;
+
+                // 根据当前页面过滤
+                if (currentPage === 'juedi') {
+                    filtered = filtered.filter(doc => doc.mythTag === '绝地天通');
+                } else if (currentPage === 'babel') {
+                    filtered = filtered.filter(doc => doc.mythTag === '巴别塔');
+                }
+
+                // 根据搜索词过滤
+                if (searchTerm) {
+                    filtered = filtered.filter(doc => {
+                        const titleMatch = doc.title.toLowerCase().includes(searchTerm);
+                        const descriptionMatch = doc.description.toLowerCase().includes(searchTerm);
+                        const categoryMatch = doc.category.toLowerCase().includes(searchTerm);
+                        const mythTagMatch = doc.mythTag ? doc.mythTag.toLowerCase().includes(searchTerm) : false;
+                        return titleMatch || descriptionMatch || categoryMatch || mythTagMatch;
+                    });
+                }
+
+                const totalRendered = renderDocumentsByCategory(filtered, currentPage);
+                const wrapper = pageWrappers[currentPage];
+                const noResultElement = pageNoResultElements[currentPage];
+
+                if (wrapper) {
+                    if (totalRendered === 0) {
+                        wrapper.classList.add('hidden');
+                    } else {
+                        wrapper.classList.remove('hidden');
+                    }
+                }
+
+                if (noResultElement) {
+                    if (totalRendered === 0) {
+                        noResultElement.classList.remove('hidden');
+                        if (noResultElement === noResults && loadingState && emptyState) {
+                            loadingState.classList.add('hidden');
+                            emptyState.classList.remove('hidden');
+                        }
+                    } else {
+                        noResultElement.classList.add('hidden');
+                        if (noResultElement === noResults && loadingState && emptyState) {
+                            loadingState.classList.add('hidden');
+                            emptyState.classList.add('hidden');
+                        }
+                    }
+                }
+            }
+
+            // --- 核心功能：加载 TCB 文档 ---
+            function loadDocuments() {
+                console.log("开始监听数据库...");
+                if (noResults) {
+                    noResults.classList.remove('hidden');
+                    loadingState.classList.remove('hidden');
+                    emptyState.classList.add('hidden');
+                }
+
+                dbWatcher = documentsCollection
+                    .watch({
+                        onChange: (snapshot) => {
+                            console.log("TCB 数据快照更新:", snapshot);
+                            if (snapshot.error) {
+                                console.error("TCB 监听错误:", snapshot.error);
+                                showError(`数据库监听失败: ${snapshot.error.message}。请检查您的 TCB 数据库安全规则。`);
+                                return;
+                            }
+
+                            allDocuments = [];
+                            snapshot.docs.forEach((doc) => {
+                                let parsableDate = null;
+
+                                if (doc.date && typeof doc.date === 'string') {
+                                    parsableDate = doc.date;
+                                } else if (doc.date && typeof doc.date.toDate === 'function') {
+                                    parsableDate = doc.date.toDate().toISOString();
+                                } else if (doc.date && typeof doc.date === 'object' && doc.date.$date) {
+                                    const timestamp = Number(doc.date.$date);
+                                    if (!isNaN(timestamp)) {
+                                        parsableDate = new Date(timestamp).toISOString();
+                                    }
+                                }
+
+                                const newDoc = {
+                                    id: doc._id,
+                                    ...doc,
+                                    date: parsableDate
+                                };
+
+                                delete newDoc._openid;
+                                delete newDoc._id;
+                                allDocuments.push(newDoc);
+                            });
+
+                            allDocuments.sort((a, b) => {
+                                const dateA = a.date ? new Date(a.date).getTime() : 0;
+                                const dateB = b.date ? new Date(b.date).getTime() : 0;
+                                return dateB - dateA;
+                            });
+
+                            filterAndRenderDocuments();
+                        },
+                        onError: (error) => {
+                            console.error("TCB 监听器发生严重错误:", error);
+                            showError(`数据库连接断开: ${error.message}`);
+                        }
+                    });
+            }
+
+            // --- 用户版本：无需删除和保存文档功能 ---
+
+            // --- 搜索事件监听 ---
+            function performSearch() {
+                filterAndRenderDocuments();
+                if (smallSearchBar && !smallSearchBar.classList.contains('hidden')) {
+                    smallSearchBar.classList.add('hidden');
+                }
+                if (searchInput) {
+                    searchInput.blur();
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    filterAndRenderDocuments();
+                });
+
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        performSearch();
+                    }
+                });
+            }
+
+            if (searchSubmitButton) {
+                searchSubmitButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    performSearch();
+                });
+            }
+
+            if (searchIconButton) {
+                searchIconButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (smallSearchBar) {
+                        smallSearchBar.classList.toggle('hidden');
+                        if (!smallSearchBar.classList.contains('hidden') && searchInput) {
+                            setTimeout(() => {
+                                searchInput.focus();
+                            }, 10);
+                        }
+                    }
+                });
+            }
+
+            // 点击页面其他地方时关闭搜索栏
+            document.addEventListener('click', (e) => {
+                if (smallSearchBar &&
+                    !e.target.closest('#smallSearchBar') &&
+                    !e.target.closest('#searchIconButton')) {
+                    smallSearchBar.classList.add('hidden');
+                }
+            });
+
+            // --- TCB 认证和启动 ---
+            async function main() {
+                try {
+                    const loginState = await auth.getLoginState();
+                    if (!loginState) {
+                        console.log("用户未登录，尝试匿名登录...");
+                        await auth.signInAnonymously();
+                        const newState = await auth.getLoginState();
+                        userId = newState.user.uid;
+                        console.log("TCB 匿名登录成功:", userId);
+                    } else {
+                        userId = loginState.user.uid;
+                        console.log("TCB 用户已认证:", userId);
+                    }
+
+                    loadDocuments();
+                    // 初始化首页状态
+                    switchPage('home');
+
+                } catch (error) {
+                    console.error("TCB 认证或登录失败:", error);
+                    showError(`认证失败: ${error.message}。请检查您的 TCB 环境是否开启了匿名登录。`);
+                }
+            }
+
+            main();
+
+        }); // End of DOMContentLoaded
+    </script>
+</body>
+
+</html>
